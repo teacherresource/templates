@@ -8,6 +8,7 @@ browser, and it works: no install, no account, no internet needed once it's on y
 | Subject | Template | What it does |
 | --- | --- | --- |
 | Any subject | [Half-Sheet Flash Cards](general/half-sheet-flash-cards/) | Type-your-own question and answer cards with quick style buttons, printed one per half page (8.5 × 5.5 in). |
+| Math | [Math Speed Drills](math/math-speed-drills/) | Timed fact drills, 100 to a page, for any number families, with a learning row of the day's facts and a matching answer key. |
 | Music | [Measure Cards](music/measure-cards/) | Printable and projectable flash cards for rhythm, note reading, shape notes, grand staff and lyrics. |
 
 ## How this repository is organised

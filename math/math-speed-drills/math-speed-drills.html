@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Math Facts Speed Drill Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1B2027;
+  --panel:#232B35;
+  --panel-2:#2C3542;
+  --panel-3:#3A4553;
+  --edge:#46525F;
+  --paper:#FFFFFF;
+  --desk:#7E8A97;
+  --rule:#BCC4CC;
+  --pen:#D8323C;
+  --mark:#FFDD57;
+  --dim:#9AA6B2;
+  --ui:'Archivo','Helvetica Neue',Arial,sans-serif;
+  --sheetfont:'Atkinson Hyperlegible',Verdana,Geneva,sans-serif;
+  --page-w:7.7in;
+  --page-h:10.2in;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;font-family:var(--ui);background:var(--desk);color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+.app{display:flex;min-height:100vh;align-items:flex-start}
+
+/* ---------- control panel ---------- */
+.panel{
+  width:335px;flex:0 0 335px;background:var(--panel);color:#EEF2F6;
+  height:100vh;position:sticky;top:0;overflow-y:auto;
+  border-right:3px solid var(--ink);
+}
+.panel-head{padding:20px 20px 16px;border-bottom:1px solid var(--edge)}
+.panel-head h1{
+  font-size:19px;line-height:1.15;margin:0;font-weight:800;letter-spacing:-.015em;
+}
+.panel-head p{margin:6px 0 0;font-size:12px;color:var(--dim);line-height:1.45}
+.sec{padding:16px 20px;border-bottom:1px solid var(--edge)}
+.sec > h2{
+  font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;font-weight:800;
+  color:var(--mark);margin:0 0 12px;
+}
+.field{margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+label.lbl{display:block;font-size:12px;font-weight:600;margin-bottom:5px;color:#DCE3EA}
+.hint{font-size:11px;color:var(--dim);margin-top:5px;line-height:1.4}
+input[type=text],input[type=number],select{
+  width:100%;background:var(--panel-2);border:1px solid var(--edge);color:#fff;
+  border-radius:6px;padding:8px 9px;font-family:var(--ui);font-size:13px;
+}
+input[type=text]:focus,input[type=number]:focus,select:focus,button:focus-visible,
+.chip:focus-visible,.seg button:focus-visible{
+  outline:2px solid var(--mark);outline-offset:1px;
+}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,#DCE3EA 50%),linear-gradient(135deg,#DCE3EA 50%,transparent 50%);background-position:calc(100% - 15px) 55%,calc(100% - 10px) 55%;background-size:5px 5px;background-repeat:no-repeat}
+.row2{display:flex;gap:8px}
+.row2 > *{flex:1;min-width:0}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  font-family:var(--ui);font-size:13px;font-weight:600;cursor:pointer;
+  background:var(--panel-2);border:1px solid var(--edge);color:#DCE3EA;
+  border-radius:6px;padding:7px 11px;line-height:1;
+}
+.chip:hover{background:var(--panel-3)}
+.chip[aria-pressed=true]{background:var(--mark);border-color:var(--mark);color:#20262E}
+.chip.sm{font-size:11.5px;padding:5px 8px;font-weight:600}
+
+.seg{display:flex;background:var(--panel-2);border:1px solid var(--edge);border-radius:6px;overflow:hidden}
+.seg button{
+  flex:1;background:none;border:0;color:#DCE3EA;font-family:var(--ui);font-size:12.5px;
+  font-weight:600;padding:8px 4px;cursor:pointer;
+}
+.seg button[aria-pressed=true]{background:var(--pen);color:#fff}
+
+.check{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;margin-bottom:9px;cursor:pointer;line-height:1.35}
+.check:last-child{margin-bottom:0}
+.check input{margin:1px 0 0;accent-color:var(--mark);width:15px;height:15px;flex:0 0 auto}
+
+input[type=range]{width:100%;accent-color:var(--mark)}
+
+.actions{padding:16px 20px 24px;display:flex;flex-direction:column;gap:9px}
+button.primary,button.ghost{
+  font-family:var(--ui);font-weight:700;font-size:14px;border-radius:7px;padding:12px;
+  cursor:pointer;border:1px solid transparent;
+}
+button.primary{background:var(--pen);color:#fff}
+button.primary:hover{background:#C22732}
+button.ghost{background:transparent;color:#DCE3EA;border-color:var(--edge)}
+button.ghost:hover{background:var(--panel-2)}
+
+/* ---------- stage & sheets ---------- */
+.stage{flex:1;min-width:0;padding:26px;overflow-x:auto}
+.stagebar{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin:0 auto 16px;width:var(--page-w);color:#1F262E;
+}
+.stagebar .tag{
+  font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  background:rgba(255,255,255,.75);border-radius:20px;padding:5px 11px;
+}
+.stagebar .warn{background:var(--pen);color:#fff}
+
+.sheet{
+  width:var(--page-w);min-height:var(--page-h);background:var(--paper);
+  margin:0 auto 26px;padding:0;box-shadow:0 5px 22px rgba(20,26,33,.32);
+  font-family:var(--sheetfont);color:#000;position:relative;
+  display:flex;flex-direction:column;
+}
+.sheet-head{border-bottom:2px solid #000;padding-bottom:7px;margin-bottom:12px}
+.head-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.sheet-title{font-size:17px;font-weight:700;margin:0;letter-spacing:-.01em}
+.sheet-meta{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}
+.head-lines{display:flex;gap:16px;margin-top:9px;font-size:12px;align-items:baseline}
+.head-lines .ln{display:flex;align-items:baseline;gap:5px;white-space:nowrap}
+.head-lines .ln .fill{border-bottom:1px solid #000;display:inline-block;min-width:1.5in}
+.head-lines .ln.grow{flex:1}
+.head-lines .ln.grow .fill{min-width:0;width:100%}
+.keytag{
+  border:1.5px solid var(--pen);color:var(--pen);border-radius:4px;
+  padding:2px 7px;font-size:10.5px;font-weight:700;letter-spacing:.1em;
+}
+.grid{display:grid;gap:0;flex:1;align-content:stretch;grid-auto-rows:1fr}
+.p{
+  display:flex;align-items:center;gap:.35em;padding:.15em .3em;
+  font-variant-numeric:tabular-nums;line-height:1.2;position:relative;
+}
+.p .idx{color:#7A7A7A;font-size:.62em;min-width:1.6em;text-align:right;flex:0 0 auto}
+.p .expr{white-space:nowrap}
+.p .ans{
+  border-bottom:1px solid #000;min-width:2.1em;display:inline-block;
+  text-align:center;flex:0 0 auto;
+}
+.p .ans.filled{border-bottom-color:transparent;color:var(--pen);font-weight:700}
+
+.p.vert{justify-content:center;align-items:center;padding:.3em .28em .34em}
+.p.vert .box{width:var(--pw,4ch)}
+.p.vert .idx{
+  position:absolute;left:.25em;top:.12em;font-size:.55em;color:#9A9A9A;
+  min-width:0;text-align:left;
+}
+.p.vert .l1,.p.vert .l3{text-align:right;white-space:nowrap}
+.p.vert .l2{display:flex;justify-content:space-between;align-items:baseline;white-space:nowrap}
+.p.vert .l2 .op{font-weight:700}
+.p.vert .bar{border-top:1.6px solid #000;margin-top:.12em}
+.p.vert .l3{min-height:1.3em;padding-top:.08em}
+.p.vert .l3.filled{color:var(--pen);font-weight:700}
+
+/* long division bracket */
+.ld{display:flex;align-items:flex-end;justify-content:center;white-space:nowrap}
+.ld .dvsr{padding-right:.05em}
+.ld .stk{display:flex;flex-direction:column}
+.ld .quot{text-align:right;min-height:1.3em;padding:0 .16em .02em .5em}
+.p.vert .ld .quot.filled{color:var(--pen);font-weight:700}
+.fitem .quot{font-weight:700}
+.ld .dvd{
+  border-top:1.6px solid #000;border-left:1.6px solid #000;
+  border-top-left-radius:.45em .62em;
+  padding:.09em .16em 0 .5em;
+}
+
+/* row-number gutter */
+.rownum{
+  display:flex;align-items:center;justify-content:flex-end;
+  font-size:.6em;font-weight:700;color:#8C8C8C;letter-spacing:.02em;
+  padding-right:.5em;border-right:1px solid #D9D9D9;
+}
+.grid.rows > .p,.grid.rows > .rownum{border-bottom:1px solid #EAEAEA}
+.grid.rows > .lastrow{border-bottom:0}
+.grid.rows > .p{padding-left:.4em}
+
+/* learning row */
+.focusband{
+  border:1.6px solid #000;border-radius:5px;background:#F1F3F5;
+  padding:.3em .45em .4em;margin-bottom:.5em;flex:0 0 auto;
+  font-variant-numeric:tabular-nums;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;
+}
+.focusband .flabel{
+  font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;
+  color:#000;margin-bottom:.3em;line-height:1.2;
+}
+.frow{display:flex;flex-wrap:wrap;align-items:flex-end}
+.fitem{
+  flex:0 0 var(--fw,25%);display:flex;justify-content:center;
+  padding:.22em .2em;line-height:1.2;
+}
+.fitem .box{width:var(--fpw,4ch)}
+.fitem .l1,.fitem .l3{text-align:right;white-space:nowrap}
+.fitem .l2{display:flex;justify-content:space-between;align-items:baseline;white-space:nowrap}
+.fitem .l2 .op{font-weight:700}
+.fitem .bar{border-top:1.6px solid #000;margin-top:.12em}
+.fitem .l3{font-weight:700;padding-top:.08em}
+.fitem .flat{white-space:nowrap;font-weight:400}
+.fitem .flat b{font-weight:700}
+
+.sec.muted{opacity:.4}
+.sec.muted .chips,.sec.muted input,.sec.muted select{pointer-events:none}
+.notice{
+  font-size:11px;line-height:1.4;color:#20262E;background:var(--mark);
+  border-radius:5px;padding:7px 9px;margin-top:10px;font-weight:600;
+}
+
+.empty{padding:1in .6in;text-align:center;font-size:15px;color:#555;line-height:1.6}
+.pagefoot{
+  margin-top:10px;padding-top:6px;border-top:1px solid var(--rule);
+  font-size:9px;letter-spacing:.06em;color:#666;display:flex;justify-content:space-between;
+}
+
+.sheet-inner{padding:.5in .45in;display:flex;flex-direction:column;flex:1}
+
+@media (max-width:900px){
+  .app{flex-direction:column}
+  .panel{width:100%;flex:none;height:auto;position:static;border-right:0;border-bottom:3px solid var(--ink)}
+  .stage{padding:16px;width:100%}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+@page{size:letter portrait;margin:.4in}
+@media print{
+  body{background:#fff}
+  .panel,.stagebar{display:none!important}
+  .stage{padding:0;overflow:visible}
+  .sheet{
+    box-shadow:none;margin:0;width:100%;min-height:0;
+    page-break-after:always;break-after:page;
+  }
+  .sheet:last-child{page-break-after:auto;break-after:auto}
+  .sheet-inner{padding:0}
+  .p .ans.filled,.p.vert .l3.filled,.keytag{
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="panel">
+  <div class="panel-head">
+    <h1>Math Facts Speed Drill Builder</h1>
+    <p>Set it up on the left, print from the right. Nothing is saved — bookmark or save this file to keep it.</p>
+  </div>
+
+  <section class="sec">
+    <h2>Today&rsquo;s facts</h2>
+    <label class="check"><input type="checkbox" id="focusOn" checked><span>Show a learning row at the top</span></label>
+    <label class="check"><input type="checkbox" id="focusOnly" checked><span>Drill only these facts on the whole page</span></label>
+    <div class="field" style="margin-top:12px">
+      <label class="lbl" for="focusText">Facts we&rsquo;re learning</label>
+      <input type="text" id="focusText" value="7x8, 8x7, 7x9, 9x7">
+      <p class="hint">Write them out: <b>7x8, 8x7, 6x9</b>. Works with any operation &mdash; <b>15-8</b>, <b>56/7</b>, <b>9+6</b>. Up to 12.</p>
+    </div>
+    <div class="field">
+      <label class="lbl" for="focusLabel">Row label</label>
+      <input type="text" id="focusLabel" value="Today's facts &mdash; study these first">
+    </div>
+  </section>
+
+  <section class="sec" id="secOps">
+    <h2>Operations</h2>
+    <div class="chips" id="ops">
+      <button class="chip" data-op="+" aria-pressed="false">+ Addition</button>
+      <button class="chip" data-op="-" aria-pressed="false">&minus; Subtraction</button>
+      <button class="chip" data-op="*" aria-pressed="true">&times; Multiplication</button>
+      <button class="chip" data-op="/" aria-pressed="false">&divide; Division</button>
+    </div>
+    <p class="hint">Pick more than one to build a mixed drill.</p>
+  </section>
+
+  <section class="sec" id="secFam">
+    <h2>Number families</h2>
+    <div class="field">
+      <label class="lbl" for="fam">Families to drill</label>
+      <input type="text" id="fam" value="1-16">
+      <div class="chips" style="margin-top:7px">
+        <button class="chip sm" data-fam="1-16">1–16</button>
+        <button class="chip sm" data-fam="1-12">1–12</button>
+        <button class="chip sm" data-fam="0-10">0–10</button>
+        <button class="chip sm" data-fam="2,5,10">2, 5, 10</button>
+      </div>
+      <p class="hint">Type anything: <b>1-16</b>, <b>3,6,9</b>, <b>7</b>, <b>2-5, 11, 20-25</b>.</p>
+    </div>
+    <div class="field">
+      <label class="lbl" for="other">Paired with</label>
+      <input type="text" id="other" value="1-16">
+      <div class="chips" style="margin-top:7px">
+        <button class="chip sm" data-other="1-16">1–16</button>
+        <button class="chip sm" data-other="1-12">1–12</button>
+        <button class="chip sm" data-other="0-10">0–10</button>
+      </div>
+      <p class="hint">The other number in each fact. For the 7s times 0&ndash;12, set families to 7 and this to 0-12.</p>
+    </div>
+  </section>
+  <p class="notice" id="pausedNote" style="margin:0 20px 16px" hidden>Operations and families are paused &mdash; the page is drilling today&rsquo;s facts instead. Uncheck &ldquo;Drill only these facts&rdquo; to use them again.</p>
+
+  <section class="sec">
+    <h2>Fact rules</h2>
+    <label class="check"><input type="checkbox" id="mix" checked><span>Mix the order (7 × 3 and 3 × 7)</span></label>
+    <label class="check"><input type="checkbox" id="neg"><span>Allow negative answers in subtraction</span></label>
+    <label class="check"><input type="checkbox" id="uniq" checked><span>No repeated facts on a page</span></label>
+    <div class="field" style="margin-top:12px">
+      <label class="lbl" for="order">Order on the page</label>
+      <select id="order">
+        <option value="shuffle">Shuffled</option>
+        <option value="seq">In order, smallest first</option>
+      </select>
+    </div>
+    <p class="hint">Subtraction and division are built as the inverse of addition and multiplication, so answers stay whole and clean.</p>
+  </section>
+
+  <section class="sec">
+    <h2>Page layout</h2>
+    <div class="field">
+      <label class="lbl">Problem style</label>
+      <div class="seg" id="style">
+        <button data-style="v" aria-pressed="true">Stacked</button>
+        <button data-style="h" aria-pressed="false">Across &nbsp;7 × 8 =</button>
+      </div>
+    </div>
+    <div class="field row2">
+      <div>
+        <label class="lbl" for="count">Facts per page</label>
+        <input type="number" id="count" value="100" min="4" max="240" step="1">
+      </div>
+      <div>
+        <label class="lbl" for="cols">Columns</label>
+        <select id="cols"><option value="auto">Auto</option></select>
+      </div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="scale">Print size <span id="scaleOut" style="color:var(--dim);font-weight:500"></span></label>
+      <input type="range" id="scale" min="60" max="150" value="100" step="5">
+    </div>
+    <div class="field">
+      <label class="lbl" for="numbering">Numbering</label>
+      <select id="numbering">
+        <option value="rows">Row numbers down the side</option>
+        <option value="each">Number every problem</option>
+        <option value="none">None</option>
+      </select>
+      <p class="hint">Row numbers let you say &ldquo;start on row 4&rdquo; without counting.</p>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>Sheet</h2>
+    <div class="field">
+      <label class="lbl" for="title">Title</label>
+      <input type="text" id="title" value="Math Facts Speed Drill">
+    </div>
+    <div class="field row2">
+      <div>
+        <label class="lbl" for="pages">Worksheets</label>
+        <input type="number" id="pages" value="1" min="1" max="20" step="1">
+      </div>
+      <div>
+        <label class="lbl" for="limit">Time limit</label>
+        <input type="text" id="limit" value="5 minutes">
+      </div>
+    </div>
+    <label class="check"><input type="checkbox" id="header" checked><span>Show heading and name line</span></label>
+    <label class="check"><input type="checkbox" id="score" checked><span>Show score box</span></label>
+    <p class="hint">Each worksheet gets its own letter (A, B, C…) and a different set of facts.</p>
+  </section>
+
+  <section class="sec">
+    <h2>Answers</h2>
+    <div class="field">
+      <div class="seg" id="mode">
+        <button data-mode="blank" aria-pressed="true">Blank</button>
+        <button data-mode="answers" aria-pressed="false">With answers</button>
+      </div>
+    </div>
+    <label class="check"><input type="checkbox" id="appendkey" checked><span>Add a matching answer key page after each blank worksheet</span></label>
+    <p class="hint">Answers print in red so keys are easy to spot in a stack.</p>
+  </section>
+
+  <div class="actions">
+    <button class="primary" id="print">Print</button>
+    <button class="ghost" id="reroll">New set of facts</button>
+  </div>
+</aside>
+
+<main class="stage">
+  <div class="stagebar">
+    <span class="tag" id="tagCount">—</span>
+    <span class="tag" id="tagPool">—</span>
+    <span class="tag" id="tagFit" hidden>—</span>
+  </div>
+  <div id="sheets"></div>
+</main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var $ = function(id){ return document.getElementById(id); };
+  var OPS = { "+":"+", "-":"\u2212", "*":"\u00D7", "/":"\u00F7" };
+  var seedBase = Math.floor(Math.random()*100000);
+
+  /* seeded RNG so an answer key always matches its worksheet */
+  function rng(seed){
+    var a = seed >>> 0;
+    return function(){
+      a += 0x6D2B79F5;
+      var t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  /* "1-16, 20  25 to 27" -> [1..16,20,25,26,27] */
+  function parseSet(str){
+    if(!str) return [];
+    var s = String(str).toLowerCase()
+      .replace(/[\u2013\u2014]/g,"-")
+      .replace(/\b(?:to|through|thru|till|until)\b/g,"-")
+      .replace(/\.\./g,"-")
+      .replace(/(\d)\s*-\s*(\d)/g,"$1-$2");
+    var tokens = s.split(/[^0-9\-]+/).filter(Boolean);
+    var out = [];
+    var seen = Object.create(null);
+    function push(n){
+      if(!isFinite(n) || n < 0 || n > 999) return;
+      if(seen[n]) return;
+      seen[n] = 1; out.push(n);
+    }
+    for(var i=0;i<tokens.length && out.length<600;i++){
+      var t = tokens[i];
+      var m = t.match(/^(\d+)-(\d+)/);
+      if(m){
+        var lo = parseInt(m[1],10), hi = parseInt(m[2],10);
+        if(lo > hi){ var tmp = lo; lo = hi; hi = tmp; }
+        hi = Math.min(hi, lo + 400);
+        for(var n=lo;n<=hi;n++) push(n);
+      } else {
+        var v = parseInt(t.replace(/-/g,""),10);
+        if(!isNaN(v)) push(v);
+      }
+    }
+    out.sort(function(a,b){ return a-b; });
+    return out;
+  }
+
+  function readConfig(){
+    var ops = [];
+    Array.prototype.forEach.call($("ops").querySelectorAll(".chip"), function(b){
+      if(b.getAttribute("aria-pressed") === "true") ops.push(b.dataset.op);
+    });
+    var style = $("style").querySelector('[aria-pressed="true"]').dataset.style;
+    var mode = $("mode").querySelector('[aria-pressed="true"]').dataset.mode;
+    var count = Math.max(4, Math.min(240, parseInt($("count").value,10) || 100));
+    return {
+      ops: ops,
+      fams: parseSet($("fam").value),
+      others: parseSet($("other").value),
+      mix: $("mix").checked,
+      neg: $("neg").checked,
+      uniq: $("uniq").checked,
+      order: $("order").value,
+      style: style,
+      count: count,
+      cols: $("cols").value,
+      scale: parseInt($("scale").value,10)/100,
+      numbering: $("numbering").value,
+      title: $("title").value,
+      pages: Math.max(1, Math.min(20, parseInt($("pages").value,10) || 1)),
+      limit: $("limit").value,
+      header: $("header").checked,
+      score: $("score").checked,
+      mode: mode,
+      appendkey: $("appendkey").checked,
+      focusOn: $("focusOn").checked,
+      focusOnly: $("focusOnly").checked,
+      focusText: $("focusText").value,
+      focusLabel: $("focusLabel").value
+    };
+  }
+
+  /* build every fact allowed by the settings */
+  function buildPool(cfg, focus){
+    if(cfg.focusOnly && focus.length) return focus.slice();
+    var pool = [];
+    var seen = Object.create(null);
+    function add(a, op, b, ans){
+      if(cfg.uniq){
+        var k = a + op + b;
+        if(seen[k]) return;
+        seen[k] = 1;
+      }
+      pool.push({ a:a, op:op, b:b, ans:ans });
+    }
+    cfg.ops.forEach(function(op){
+      cfg.fams.forEach(function(f){
+        cfg.others.forEach(function(o){
+          if(op === "+"){
+            add(f,"+",o,f+o);
+            if(cfg.mix && f !== o) add(o,"+",f,f+o);
+          } else if(op === "-"){
+            if(cfg.neg){
+              add(f,"-",o,f-o);
+              if(cfg.mix && f !== o) add(o,"-",f,o-f);
+            } else {
+              var sum = f + o;
+              add(sum,"-",f,o);
+              if(cfg.mix && f !== o) add(sum,"-",o,f);
+            }
+          } else if(op === "*"){
+            add(f,"*",o,f*o);
+            if(cfg.mix && f !== o) add(o,"*",f,f*o);
+          } else if(op === "/"){
+            var prod = f * o;
+            if(f !== 0) add(prod,"/",f,o);
+            if(cfg.mix && o !== 0 && f !== o) add(prod,"/",o,f);
+          }
+        });
+      });
+    });
+    return pool;
+  }
+
+  function pick(pool, cfg, seed){
+    var out = [];
+    if(!pool.length) return out;
+    if(cfg.order === "seq"){
+      for(var i=0;i<cfg.count;i++) out.push(pool[i % pool.length]);
+      return out;
+    }
+    var rand = rng(seed);
+    var bag = [];
+    while(out.length < cfg.count){
+      if(!bag.length){
+        bag = pool.slice();
+        for(var j=bag.length-1;j>0;j--){
+          var k = Math.floor(rand()*(j+1));
+          var t = bag[j]; bag[j] = bag[k]; bag[k] = t;
+        }
+      }
+      out.push(bag.pop());
+    }
+    return out;
+  }
+
+  /* pick the column count that lets the type run largest on one page */
+  function autoCols(cfg, m, bandH){
+    if(cfg.cols !== "auto") return parseInt(cfg.cols,10);
+    var pts = [], best = 0, c;
+    for(c=2;c<=14;c++){
+      pts[c] = fontSize(cfg, c, m, bandH);
+      if(pts[c] > best) best = pts[c];
+    }
+    /* trade a little type size for a grid whose last row comes out full */
+    var pick = 0, bestScore = -1e9;
+    for(c=2;c<=14;c++){
+      if(pts[c] < best * 0.86) continue;
+      var rem = cfg.count % c;
+      var waste = rem === 0 ? 0 : c - rem;
+      var score = pts[c] - waste * 0.45;
+      if(score > bestScore){ bestScore = score; pick = c; }
+    }
+    return pick || 5;
+  }
+
+  /* 3786 -> "3,786", the way it is printed in a textbook */
+  function fmt(n){
+    return typeof n === "number" ? n.toLocaleString("en-US") : String(n);
+  }
+  function flen(n){ return fmt(n).length; }
+
+  /* "7x8, 15-8, 56/7" -> problem objects */
+  function parseFacts(str){
+    if(!str) return [];
+    var s = String(str)
+      .replace(/[\u00D7]/g,"*").replace(/[xX]/g,"*")
+      .replace(/[\u00F7]/g,"/")
+      .replace(/[\u2212\u2013\u2014]/g,"-");
+    var re = /(\d+)\s*([+\-*\/])\s*(\d+)/g, m, out = [];
+    while((m = re.exec(s)) && out.length < 12){
+      var a = parseInt(m[1],10), op = m[2], b = parseInt(m[3],10), ans;
+      if(a > 9999 || b > 9999) continue;
+      if(op === "+") ans = a + b;
+      else if(op === "-") ans = a - b;
+      else if(op === "*") ans = a * b;
+      else {
+        if(b === 0) continue;
+        ans = a / b;
+        if(!Number.isInteger(ans)) ans = Math.round(ans*100)/100;
+      }
+      out.push({ a:a, op:op, b:b, ans:ans });
+    }
+    return out;
+  }
+
+  function factsPerRow(n){
+    if(n <= 6) return n;
+    return Math.ceil(n / Math.ceil(n/6));
+  }
+
+  /* widest fact in the band, in digit-widths, plus how tall a row is */
+  function bandShape(cfg, focus){
+    var box = 1, wide = 0, other = false, i, p;
+    for(i=0;i<focus.length;i++){
+      p = focus[i];
+      if(cfg.style === "v" && p.op === "/"){
+        wide = Math.max(wide, flen(p.a) + flen(p.b) + 2.4);
+        continue;
+      }
+      other = true;
+      box = Math.max(box, flen(p.a), flen(p.ans), flen(p.b) + 2);
+    }
+    var chars, lines;
+    if(cfg.style === "v"){
+      chars = Math.max(other ? box + 2.5 : 0, wide + 1.3);
+      lines = other ? 4.5 : 3.3;
+    } else {
+      chars = 0;
+      for(i=0;i<focus.length;i++){
+        chars = Math.max(chars,
+          flen(focus[i].a) + flen(focus[i].b) + flen(focus[i].ans) + 6);
+      }
+      lines = 1.8;
+    }
+    return { box: box, chars: chars, lines: lines };
+  }
+
+  function bandHTML(cfg, focus, pt){
+    var per = factsPerRow(focus.length);
+    var sh = bandShape(cfg, focus);
+    var items = focus.map(function(p){
+      var inner;
+      if(cfg.style === "v"){
+        inner = p.op === "/" ? longDivHTML(p, true) : stackedHTML(p, true);
+      } else {
+        inner = '<span class="flat">'+fmt(p.a)+' '+OPS[p.op]+' '+fmt(p.b)+
+          ' = <b>'+fmt(p.ans)+'</b></span>';
+      }
+      return '<div class="fitem">'+inner+'</div>';
+    }).join("");
+    var style = "font-size:"+pt.toFixed(2)+"pt;--fw:"+(100/per).toFixed(4)+
+      "%;--fpw:"+sh.box.toFixed(1)+"ch";
+    var label = cfg.focusLabel ? '<div class="flabel">'+esc(cfg.focusLabel)+'</div>' : "";
+    return '<div class="focusband" style="'+style+'">'+label+
+      '<div class="frow">'+items+'</div></div>';
+  }
+
+  /* band type size and the vertical space it eats, in inches */
+  function bandMetrics(cfg, focus){
+    var per = factsPerRow(focus.length);
+    var rows = Math.ceil(focus.length / per);
+    var sh = bandShape(cfg, focus);
+    var pt = (6.8 * 72 * 0.85) / (per * sh.chars * 0.62);
+    pt = Math.max(9, Math.min(18, pt)) * Math.min(1.15, cfg.scale);
+    var h = (pt * sh.lines / 72) * rows + 0.34;
+    return { pt: pt, h: h };
+  }
+
+  function measure(cfg, probs){
+    var a = 1, b = 1, ans = 1, wideDiv = 0, other = false, i, p;
+    for(i=0;i<probs.length;i++){
+      p = probs[i];
+      if(cfg.style === "v" && p.op === "/"){
+        /* divisor ) dividend, plus the bracket and its padding */
+        wideDiv = Math.max(wideDiv, flen(p.a) + flen(p.b) + 2.4);
+        continue;
+      }
+      other = true;
+      a = Math.max(a, flen(p.a));
+      b = Math.max(b, flen(p.b));
+      ans = Math.max(ans, flen(p.ans));
+    }
+    /* stacked: operator sits to the left of the bottom number */
+    var box = Math.max(a, ans, b + 2);
+    var chars, lines;
+    if(cfg.style === "v"){
+      chars = Math.max(other ? box + 1.2 : 0, wideDiv);
+      /* long division is two lines tall, a stacked sum is four */
+      lines = other ? 4.75 : 3.5;
+    } else {
+      chars = a + b + ans + 5;
+      lines = 0;
+    }
+    return { box: box, chars: chars, lines: lines };
+  }
+
+  /* rough type sizing so the page stays full but not overflowing */
+  function fontSize(cfg, cols, m, bandH){
+    var rows = Math.ceil(cfg.count / cols);
+    var gutter = cfg.numbering === "rows" ? 0.3 : 0;
+    var availW = 7.7 - 0.9 - gutter;           /* inches inside the sheet padding */
+    var availH = (10.2 - 1.0) - (cfg.header ? 0.85 : 0) - (bandH || 0) - 0.25;
+    var cellW = availW / cols;
+    var cellH = availH / rows;
+    var chars = m.chars + (cfg.numbering === "each" ? 1.6 : 0);
+    var byW, byH;
+    if(cfg.style === "v"){
+      byW = (cellW * 72 * 0.95) / (chars * 0.62);
+      byH = (cellH * 72) / (m.lines || 4.75);   /* number lines + rule + padding */
+    } else {
+      byW = (cellW * 72 * 0.95) / (chars * 0.60);
+      byH = (cellH * 72) * 0.60;
+    }
+    var pt = Math.min(byW, byH) * cfg.scale;
+    return Math.max(5, Math.min(26, pt));
+  }
+
+  function esc(s){
+    return String(s).replace(/[&<>"]/g, function(c){
+      return { "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c];
+    });
+  }
+
+  /* divisor ) dividend, with the quotient sitting above the bar */
+  function longDivHTML(p, showAns, cls){
+    var q = showAns
+      ? '<div class="quot filled">'+fmt(p.ans)+'</div>'
+      : '<div class="quot"></div>';
+    return '<div class="ld'+(cls?" "+cls:"")+'">'+
+      '<div class="dvsr">'+fmt(p.b)+'</div>'+
+      '<div class="stk">'+q+'<div class="dvd">'+fmt(p.a)+'</div></div></div>';
+  }
+
+  function stackedHTML(p, showAns){
+    var res = showAns
+      ? '<div class="l3 filled">'+fmt(p.ans)+'</div>'
+      : '<div class="l3"></div>';
+    return '<div class="box">'+
+      '<div class="l1">'+fmt(p.a)+'</div>'+
+      '<div class="l2"><span class="op">'+OPS[p.op]+'</span><span>'+fmt(p.b)+'</span></div>'+
+      '<div class="bar"></div>'+ res +'</div>';
+  }
+
+  function problemHTML(p, i, cfg, showAns, last){
+    var idx = cfg.numbering === "each" ? '<span class="idx">'+(i+1)+'</span>' : "";
+    var edge = last ? " lastrow" : "";
+    if(cfg.style === "v"){
+      var inner = p.op === "/" ? longDivHTML(p, showAns) : stackedHTML(p, showAns);
+      return '<div class="p vert'+edge+'">'+idx+inner+'</div>';
+    }
+    var ans = showAns
+      ? '<span class="ans filled">'+fmt(p.ans)+'</span>'
+      : '<span class="ans">&nbsp;</span>';
+    return '<div class="p'+edge+'">'+idx+
+      '<span class="expr">'+fmt(p.a)+' '+OPS[p.op]+' '+fmt(p.b)+' =</span>'+ ans +'</div>';
+  }
+
+  /* lay the page out row by row so row numbers line up in the gutter */
+  function gridHTML(cfg, probs, showAns, cols){
+    var useRows = cfg.numbering === "rows";
+    var rows = Math.ceil(probs.length / cols);
+    var out = "";
+    for(var r=0;r<rows;r++){
+      var last = (r === rows - 1);
+      if(useRows) out += '<div class="rownum'+(last?" lastrow":"")+'">'+(r+1)+'</div>';
+      for(var c=0;c<cols;c++){
+        var i = r*cols + c;
+        if(i >= probs.length){
+          out += '<div class="p'+(last?" lastrow":"")+'"></div>';
+        } else {
+          out += problemHTML(probs[i], i, cfg, showAns, last);
+        }
+      }
+    }
+    return out;
+  }
+
+  function headHTML(cfg, letter, isKey){
+    if(!cfg.header) return "";
+    var right = isKey
+      ? '<span class="keytag">Answer key &middot; '+letter+'</span>'
+      : '<span class="sheet-meta">Set '+letter+(cfg.limit ? " &middot; "+esc(cfg.limit) : "")+'</span>';
+    var lines = '<div class="head-lines">'+
+      '<span class="ln grow">Name <span class="fill"></span></span>'+
+      '<span class="ln">Date <span class="fill" style="min-width:1.1in"></span></span>'+
+      (cfg.score ? '<span class="ln">Score <span class="fill" style="min-width:.7in"></span> / '+cfg.count+'</span>' : "")+
+      '</div>';
+    return '<div class="sheet-head"><div class="head-top">'+
+      '<h2 class="sheet-title">'+esc(cfg.title || "Math Facts")+'</h2>'+ right +
+      '</div>'+ (isKey ? "" : lines) +'</div>';
+  }
+
+  function sheetHTML(cfg, probs, letter, isKey, cols, pt, m, band){
+    var showAns = isKey || cfg.mode === "answers";
+    var useRows = cfg.numbering === "rows";
+    var tmpl = (useRows ? "1.9em " : "") + "repeat("+cols+",1fr)";
+    var style = "grid-template-columns:"+tmpl+";font-size:"+pt.toFixed(2)+"pt;--pw:"+m.box.toFixed(1)+"ch";
+    return '<section class="sheet"><div class="sheet-inner">'+
+      headHTML(cfg, letter, isKey)+ (band || "") +
+      '<div class="grid'+(useRows?" rows":"")+'" style="'+style+'">'+
+      gridHTML(cfg, probs, showAns, cols)+'</div></div></section>';
+  }
+
+  function emptySheet(msg){
+    return '<section class="sheet"><div class="sheet-inner"><div class="empty">'+msg+'</div></div></section>';
+  }
+
+  var LETTERS = "ABCDEFGHIJKLMNOPQRST";
+
+  function render(){
+    var cfg = readConfig();
+    var host = $("sheets");
+    $("scaleOut").textContent = Math.round(cfg.scale*100) + "%";
+
+    var focus = parseFacts(cfg.focusText);
+    var drillFocus = cfg.focusOnly && focus.length > 0;
+    $("secOps").classList.toggle("muted", drillFocus);
+    $("secFam").classList.toggle("muted", drillFocus);
+    $("pausedNote").hidden = !drillFocus;
+
+    function bail(msg, tag){
+      host.innerHTML = emptySheet(msg);
+      $("tagCount").textContent = tag;
+      $("tagPool").textContent = "\u2014";
+      $("tagFit").hidden = true;
+    }
+    if(cfg.focusOnly && !focus.length){
+      return bail("Type the facts you want to drill, like <b>7x8, 8x7, 6x9</b>.", "No facts typed yet");
+    }
+    if(!drillFocus && !cfg.ops.length){
+      return bail("Choose at least one operation to build a worksheet.", "No operations selected");
+    }
+    if(!drillFocus && (!cfg.fams.length || !cfg.others.length)){
+      return bail("Enter the number families and what to pair them with. Try <b>1-16</b>.", "No numbers entered");
+    }
+
+    var pool = buildPool(cfg, focus);
+    var showBand = cfg.focusOn && focus.length > 0;
+    var bm = showBand ? bandMetrics(cfg, focus) : { pt:0, h:0 };
+    var band = showBand ? bandHTML(cfg, focus, bm.pt) : "";
+
+    /* draw every page first, then size them all the same so the set matches */
+    var pageProbs = [], all = [], pageNo;
+    for(pageNo=0; pageNo<cfg.pages; pageNo++){
+      var probs = pick(pool, cfg, seedBase + pageNo*7919);
+      pageProbs.push(probs);
+      all = all.concat(probs);
+    }
+    var m = measure(cfg, all);
+    var cols = autoCols(cfg, m, bm.h);
+    var pt = fontSize(cfg, cols, m, bm.h);
+
+    var html = "";
+    for(pageNo=0; pageNo<cfg.pages; pageNo++){
+      var letter = LETTERS[pageNo] || String(pageNo+1);
+      html += sheetHTML(cfg, pageProbs[pageNo], letter, false, cols, pt, m, band);
+      if(cfg.mode === "blank" && cfg.appendkey){
+        html += sheetHTML(cfg, pageProbs[pageNo], letter, true, cols, pt, m, band);
+      }
+    }
+    host.innerHTML = html;
+
+    var sheets = host.querySelectorAll(".sheet").length;
+    $("tagCount").textContent = cfg.count + " facts \u00D7 " + cfg.pages +
+      (cfg.pages === 1 ? " worksheet" : " worksheets") + " \u2192 " + sheets +
+      (sheets === 1 ? " page" : " pages") + " \u00B7 " + cols + " across";
+    if(drillFocus){
+      var each = Math.floor(cfg.count / pool.length);
+      $("tagPool").textContent = pool.length + " fact" + (pool.length === 1 ? "" : "s") +
+        " today \u2014 about " + each + " reps each";
+    } else {
+      $("tagPool").textContent = pool.length.toLocaleString() + " different facts available" +
+        (cfg.uniq && pool.length < cfg.count ? " \u2014 not enough for one page without repeats" : "");
+    }
+
+    requestAnimationFrame(checkFit);
+  }
+
+  function checkFit(){
+    var over = false;
+    Array.prototype.forEach.call(document.querySelectorAll(".sheet"), function(s){
+      if(s.scrollHeight > 10.25*96 + 4) over = true;
+    });
+    var tag = $("tagFit");
+    tag.hidden = !over;
+    tag.className = "tag warn";
+    tag.textContent = "Spilling past one page \u2014 lower the print size or add columns";
+  }
+
+  /* column choices */
+  (function(){
+    var sel = $("cols");
+    for(var i=2;i<=14;i++){
+      var o = document.createElement("option");
+      o.value = String(i); o.textContent = i + " columns";
+      sel.appendChild(o);
+    }
+  })();
+
+  /* wiring */
+  function toggleGroup(id, multi){
+    $(id).addEventListener("click", function(e){
+      var b = e.target.closest("button");
+      if(!b || !b.hasAttribute("aria-pressed")) return;
+      if(multi){
+        b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") === "true" ? "false" : "true");
+      } else {
+        Array.prototype.forEach.call(this.querySelectorAll("button"), function(x){
+          x.setAttribute("aria-pressed", "false");
+        });
+        b.setAttribute("aria-pressed", "true");
+      }
+      render();
+    });
+  }
+  toggleGroup("ops", true);
+  toggleGroup("style", false);
+  toggleGroup("mode", false);
+
+  document.addEventListener("click", function(e){
+    var b = e.target.closest("[data-fam],[data-other]");
+    if(!b) return;
+    if(b.dataset.fam) $("fam").value = b.dataset.fam;
+    if(b.dataset.other) $("other").value = b.dataset.other;
+    render();
+  });
+
+  ["fam","other","mix","neg","uniq","order","count","cols","scale","numbering",
+   "title","pages","limit","header","score","appendkey",
+   "focusOn","focusOnly","focusText","focusLabel"].forEach(function(id){
+    var el = $(id);
+    el.addEventListener("input", render);
+    el.addEventListener("change", render);
+  });
+
+  $("reroll").addEventListener("click", function(){
+    seedBase = Math.floor(Math.random()*100000);
+    render();
+  });
+  $("print").addEventListener("click", function(){ window.print(); });
+
+  render();
+})();
+</script>
+</body>
+</html>

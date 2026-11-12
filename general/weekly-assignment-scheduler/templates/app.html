@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Assignment Scheduler</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='5' width='26' height='24' rx='5' fill='%231e3054'/%3E%3Crect x='3' y='5' width='26' height='7' rx='3' fill='%23b8860b'/%3E%3Cpath d='M9 18h6M9 23h10' stroke='white' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}?v=2">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Weekly Assignment Scheduler</div>
+
+  <div class="weeknav">
+    <button class="icon-btn" id="prevWeek" title="Previous week (Alt+PageUp)" aria-label="Previous week">‹</button>
+    <button class="week-title" id="weekTitle" title="Jump to a week">
+      <span class="wt-main" id="weekLabel">…</span>
+      <span class="wt-sub" id="weekSub"></span>
+    </button>
+    <button class="icon-btn" id="nextWeek" title="Next week (Alt+PageDown)" aria-label="Next week">›</button>
+    <button class="pill-btn" id="todayBtn" hidden>This week</button>
+  </div>
+
+  <div class="top-right">
+    <span class="save-state" id="saveState" data-state="idle">All changes saved</span>
+    <div class="menu-wrap">
+      <button class="btn primary" id="printBtn">Print ▾</button>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="schedule" class="active">Schedule</button>
+  <button data-tab="weekly">Weekly &amp; Notes</button>
+  <button data-tab="students">Students</button>
+  <button data-tab="settings">Settings</button>
+</nav>
+
+<main>
+  <section id="tab-schedule" class="tab-pane active">
+    <div class="toolbar" id="scheduleToolbar"></div>
+    <div id="grids"></div>
+    <p class="help">
+      <b>Typing:</b> <kbd>Tab</kbd> next day · <kbd>Enter</kbd> next row · <kbd>Shift</kbd>+<kbd>Enter</kbd> new line ·
+      empty a cell completely to delete it · <b>⋯</b> on a cell for “only for”, “leave out”, linking &amp; copying to other grades.
+      Drag <b>⠿</b> to move an assignment.
+    </p>
+  </section>
+
+  <section id="tab-weekly" class="tab-pane">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><h2>Weekly assignments</h2><span class="muted" id="weeklyWeek"></span></div>
+        <div id="weeklyList"></div>
+        <button class="btn" id="addWeekly">+ Add weekly assignment</button>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Teacher notes</h2><span class="muted">Teacher copy only</span></div>
+        <div id="notesList"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-students" class="tab-pane">
+    <div id="studentsPane"></div>
+  </section>
+
+  <section id="tab-settings" class="tab-pane">
+    <div id="settingsPane"></div>
+  </section>
+</main>
+
+<div id="popover" class="popover" hidden></div>
+<div id="modal" class="modal-back" hidden><div class="modal" id="modalBox"></div></div>
+<div id="toasts" class="toasts"></div>
+
+<script src="{{ url_for('static', filename='app.js') }}?v=2"></script>
+</body>
+</html>

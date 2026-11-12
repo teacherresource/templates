@@ -8,6 +8,7 @@ browser, and it works: no install, no account, no internet needed once it's on y
 | Subject | Template | What it does |
 | --- | --- | --- |
 | Any subject | [Half-Sheet Flash Cards](general/half-sheet-flash-cards/) | Type-your-own question and answer cards with quick style buttons, printed one per half page (8.5 × 5.5 in). |
+| Any subject | [Weekly Assignment Scheduler](general/weekly-assignment-scheduler/) | Plan each week for several grades in a typing grid that carries last week forward, then print a sheet per student and a teacher copy. *Runs on your computer with Python (free); setup steps for Windows, Mac and Linux inside.* |
 | Math | [Math Speed Drills](math/math-speed-drills/) | Timed fact drills, 100 to a page, for any number families, with a learning row of the day's facts and a matching answer key. |
 | Music | [Measure Cards](music/measure-cards/) | Printable and projectable flash cards for rhythm, note reading, shape notes, grand staff and lyrics. |
 
@@ -24,6 +25,11 @@ Each template lives in its own folder under a subject:
       build.py             rebuilds <template-name>.html from src/
       vendor/              third-party libraries, with their version in the file name
 ```
+
+A few templates are small programs rather than one page (they need to save data on your
+computer). Those keep the same folder layout, with launchers for Windows, Mac and Linux in
+place of the `.html` file and setup steps in their `README.md`. Their data files never go in
+git.
 
 When adding a template:
 

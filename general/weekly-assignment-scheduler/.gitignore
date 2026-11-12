@@ -1,0 +1,5 @@
+# Your schedule and its backups stay on your computer, never in git
+scheduler.db
+*.db-journal
+backups/
+.venv/

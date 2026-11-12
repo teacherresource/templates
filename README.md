@@ -10,6 +10,7 @@ browser, and it works: no install, no account, no internet needed once it's on y
 | Any subject | [Half-Sheet Flash Cards](general/half-sheet-flash-cards/) | Type-your-own question and answer cards with quick style buttons, printed one per half page (8.5 × 5.5 in). |
 | Any subject | [Weekly Assignment Scheduler](general/weekly-assignment-scheduler/) | Plan each week for several grades in a typing grid that carries last week forward, then print a sheet per student and a teacher copy. *Runs on your computer with Python (free); setup steps for Windows, Mac and Linux inside.* |
 | Math | [Math Speed Drills](math/math-speed-drills/) | Timed fact drills, 100 to a page, for any number families, with a learning row of the day's facts and a matching answer key. |
+| Math | [Paper Polyhedra](math/paper-polyhedra/) | Printable patterns with glue tabs for all 119 Wenninger polyhedron models, from the Platonic and Archimedean solids to star polyhedra, stellations and compounds. |
 | Music | [Measure Cards](music/measure-cards/) | Printable and projectable flash cards for rhythm, note reading, shape notes, grand staff and lyrics. |
 
 ## How this repository is organised

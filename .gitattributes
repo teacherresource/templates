@@ -1,6 +1,7 @@
 # Built pages and bundled libraries: keep them out of language stats and diffs
 */*/*.html linguist-generated=true -diff
 **/vendor/** linguist-vendored=true -diff
+**/data/*.json linguist-generated=true -diff
 
 # Launchers keep the line endings their system needs
 *.bat text eol=crlf

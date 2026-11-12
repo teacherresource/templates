@@ -1,0 +1,156 @@
+<div class="app">
+  <aside class="panel" aria-label="Pattern settings">
+    <div class="panel-scroll">
+      <div class="brand">
+        <h1>Paper Polyhedra</h1>
+        <p>Printable patterns with glue tabs for all 119 of Magnus Wenninger’s polyhedron models: the Platonic and Archimedean solids, star polyhedra, stellations and compounds. Every model comes in small sections that are easy to put together.</p>
+      </div>
+
+      <fieldset>
+        <legend>Model</legend>
+        <button class="model-card" id="modelCard" type="button" aria-haspopup="dialog">
+          <canvas id="modelThumb" width="160" height="160" aria-hidden="true"></canvas>
+          <span class="mc-text">
+            <span class="mc-w" id="mcW">W5</span>
+            <b id="mcName">Dodecahedron</b>
+            <span class="mc-meta" id="mcMeta">Platonic solids</span>
+          </span>
+        </button>
+        <div class="model-nav">
+          <button class="btn-quiet" id="prevModel" type="button" aria-label="Previous model">‹</button>
+          <button class="btn-quiet grow" id="browseBtn" type="button" aria-haspopup="dialog">Browse all 119 models</button>
+          <button class="btn-quiet" id="nextModel" type="button" aria-label="Next model">›</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Size and paper</legend>
+        <div class="row"><label class="lbl">Units</label><div class="seg grow" id="units"><button data-v="in">Inches</button><button data-v="mm">Millimeters</button></div></div>
+        <div class="row"><label class="lbl">Set size by</label><div class="seg grow" id="sizeBy"><button data-v="across">Overall size</button><button data-v="edge">Edge length</button></div></div>
+        <div class="row"><label class="lbl" for="sizeNum" id="sizeLbl">Overall size</label>
+          <div class="grow"><div class="num-unit"><input type="number" id="sizeNum"><span id="sizeUnit">in</span></div></div></div>
+        <input type="range" id="sizeRange" aria-label="Size slider">
+        <p class="hint" id="finished"></p>
+        <div class="row"><label class="lbl" for="paper">Paper</label><select id="paper" class="grow"></select></div>
+        <div class="row"><label class="lbl">Direction</label><div class="seg grow" id="orient"><button data-v="portrait">Portrait</button><button data-v="landscape">Landscape</button></div></div>
+        <div class="row"><label class="lbl" for="margin">Margin</label><select id="margin" class="grow"></select></div>
+        <p class="hint" id="paperHint"></p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Pieces</legend>
+        <div class="choices" id="grouping"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Glue tabs</legend>
+        <div class="choices" id="tabStyle"></div>
+        <div id="tabSizeRows">
+          <div class="row"><label class="lbl" for="tabDepth">Tab depth</label><input type="range" id="tabDepth" min="2" max="15" step="0.5" class="grow"><span class="out" id="tabDepthOut"></span></div>
+          <div class="row"><label class="lbl" for="tabAngle">Side angle</label><input type="range" id="tabAngle" min="20" max="60" step="1" class="grow"><span class="out" id="tabAngleOut"></span></div>
+          <p class="hint">Tabs shrink on short edges and in tight corners so they never overlap.</p>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Colors</legend>
+        <div class="row"><label class="lbl" for="scheme">Pattern</label><select id="scheme" class="grow">
+          <option value="piece">One color per piece</option>
+          <option value="type">Matching shapes match</option>
+          <option value="part">Each solid its own color</option>
+          <option value="parallel">Parallel faces match</option>
+          <option value="neighbors">No neighbors match</option>
+          <option value="each">Every face different</option>
+          <option value="single">All one color</option>
+          <option value="custom">Paint my own</option>
+        </select></div>
+        <p class="hint" id="schemeHint"></p>
+        <div class="swatches" id="swatches" role="group" aria-label="Paper colors"></div>
+        <div class="sw-edit">
+          <input type="color" id="swColor" aria-label="Selected color">
+          <input type="text" id="swName" aria-label="Selected color name" maxlength="16">
+        </div>
+        <p class="hint">Pick a swatch, then click faces on the model or the sheets to paint them.</p>
+        <label class="check"><input type="checkbox" id="colorSplit"><span>Keep each piece one color, so it can be cut from a single sheet of colored paper. Sheets are sorted by paper color.</span></label>
+        <div class="row"><label class="lbl" for="fill">Print fill</label><select id="fill" class="grow">
+          <option value="none">Outlines only (for colored paper)</option>
+          <option value="tint">Light tint</option>
+          <option value="full">Full color (white paper)</option>
+        </select></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Markings</legend>
+        <div class="row"><label class="lbl" for="labels">Glue numbers</label><select id="labels" class="grow">
+          <option value="both">On faces and tabs</option>
+          <option value="tabs">On tabs only</option>
+          <option value="off">Off</option>
+        </select></div>
+        <p class="hint">Matching numbers glue together. Numbers on faces end up on the outside of the model, so print them lightly or choose tabs only.</p>
+        <label class="check"><input type="checkbox" id="letters"><span>Letter each piece (A, B, C…)</span></label>
+        <label class="check"><input type="checkbox" id="scaleBar"><span>Add a scale check bar to each sheet</span></label>
+        <div class="row"><label class="lbl">Output</label><div class="seg grow" id="output"><button data-v="pattern">Full pattern</button><button data-v="template">Tracing templates</button></div></div>
+        <p class="hint" id="outputHint"></p>
+      </fieldset>
+    </div>
+    <div class="panel-foot">
+      <button class="btn" id="pdfBtn" type="button">Download PDF</button>
+      <p class="foot-note" id="footNote">Print at 100% (Actual size), not Fit to page.</p>
+      <div class="theme-row">
+        <button class="btn-quiet" id="resetBtn" type="button">Reset settings</button>
+        <button class="btn-quiet" id="themeBtn" type="button" aria-label="Switch color theme">Theme: auto</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="mat">
+    <div class="ruler-top" aria-hidden="true"></div>
+    <div class="ruler-left" aria-hidden="true"></div>
+    <section class="stage">
+      <div class="viewer">
+        <div class="view-wrap">
+          <canvas id="view3d" tabindex="0" aria-label="3D preview. Drag or use arrow keys to turn. Click a face to paint it."></canvas>
+          <canvas id="viewLabels" aria-hidden="true"></canvas>
+          <p class="nogl" id="noGL" hidden>The 3D preview needs WebGL, which this browser has turned off. The patterns still work.</p>
+        </div>
+        <div class="viewer-bar">
+          <button class="chip" id="spinBtn" type="button">Spin</button>
+          <button class="chip" id="numsBtn" type="button">Glue numbers</button>
+          <button class="chip" id="seamBtn" type="button">Piece seams</button>
+          <button class="chip" id="resetView" type="button">Reset view</button>
+        </div>
+        <p class="caption" id="caption" aria-live="polite">Drag to turn the model. Click a face to paint it.</p>
+      </div>
+      <div class="card">
+        <p class="kicker" id="kicker">W5 · Platonic solid</p>
+        <h2 id="title">Dodecahedron</h2>
+        <p class="sub" id="subtitle"></p>
+        <dl class="facts" id="facts"></dl>
+        <div class="stats" id="stats"></div>
+        <div class="warn" id="warn" role="status"></div>
+        <ol class="steps" id="steps"></ol>
+        <div class="legend" id="legend"></div>
+      </div>
+    </section>
+    <div class="sheets-head">
+      <h2 id="sheetsTitle">Sheets</h2>
+      <p id="sheetsNote">Hover a face to find it on the model.</p>
+      <button class="chip" id="bigBtn" type="button">Larger sheets</button>
+    </div>
+    <section class="sheets" id="sheets" aria-label="Printable sheets"></section>
+  </main>
+</div>
+
+<dialog class="browser" id="browser" aria-labelledby="browserTitle">
+  <div class="dlg-head">
+    <h2 id="browserTitle">Choose a model</h2>
+    <input type="search" id="browserSearch" placeholder="Search by name or W number" aria-label="Search models">
+    <button class="btn-quiet" id="browserClose" type="button">Close</button>
+  </div>
+  <div class="dlg-filters" id="browserFilters" role="group" aria-label="Families"></div>
+  <div class="dlg-body" id="browserGrid"></div>
+</dialog>
+
+<canvas id="thumbGL" width="192" height="192" aria-hidden="true"></canvas>
+<div class="busy" id="busy" role="status" hidden>Laying out the pattern…</div>
+<div class="toast" id="toast" role="status"></div>

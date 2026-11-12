@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ student.name }} — Weekly Schedule</title>
+<style>
+  :root {
+    --gc: {{ grade.color if grade else color_primary }};
+    --hl: {{ test_highlight_color }};
+    --dark:#2a1e10; --brown:#7c6248; --warm-gray:#d8cfc4; --cream:#faf6ef; --parchment:#f0e8d8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Georgia,'Times New Roman',serif;background:#d0c8bc;color:var(--dark)}
+  .screen-bar{position:fixed;top:0;left:0;right:0;background:var(--gc);color:white;padding:.5rem 1.25rem;display:flex;align-items:center;justify-content:space-between;z-index:100;font-size:0.95rem}
+  .screen-bar strong{font-family:Georgia,'Palatino Linotype','Book Antiqua',serif}
+  .screen-bar button{background:white;color:var(--gc);border:none;border-radius:4px;padding:.3rem .9rem;cursor:pointer;font-size:0.82rem;font-weight:600;font-family:Georgia,'Times New Roman',serif}
+  .page-wrap{padding:3.2rem .75rem 2rem;display:flex;justify-content:center}
+  .page{background:white;width:8.5in;min-height:11in;box-shadow:0 4px 20px rgba(0,0,0,.22)}
+  .banner{background:var(--gc);color:white;padding:.22in .38in .18in;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
+  .banner-left h1{font-family:Georgia,'Palatino Linotype','Book Antiqua',serif;font-size:1.55rem;font-weight:700;line-height:1.2}
+  .banner-left .sub{font-size:0.91rem;opacity:.82;margin-top:.1rem}
+  .banner-left .tagline{font-style:italic;font-size:0.86rem;opacity:.72;margin-top:.22rem;letter-spacing:.02em}
+  .banner-left .student-name{font-size:1.06rem;font-weight:600;opacity:1;margin-top:.28rem;padding-top:.18rem;border-top:1px solid rgba(255,255,255,.3)}
+  .banner-meta{font-size:0.86rem;text-align:right;line-height:1.8;opacity:.92;flex-shrink:0}
+  .banner-meta strong{font-size:0.94rem}
+  .fill-line{border-bottom:1px solid rgba(255,255,255,.6);min-width:1.6in;display:inline-block;vertical-align:bottom}
+  .page-body{padding:.15in .38in .22in}
+  .days-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.1in;margin-bottom:.15in}
+  .day-col{}
+  .day-head{background:var(--gc);color:white;padding:.1rem .16rem .08rem;font-family:Georgia,'Palatino Linotype','Book Antiqua',serif;font-size:0.86rem;font-weight:600;border-radius:3px 3px 0 0;letter-spacing:.02em}
+  .day-head .day-name{text-align:center}
+  .day-head .day-info{display:flex;justify-content:space-between;align-items:center;margin-top:.07rem;padding-top:.07rem;border-top:1px solid rgba(255,255,255,.22);font-size:0.69rem;font-weight:400;opacity:.88}
+  .day-head .day-num{background:rgba(255,255,255,.22);border-radius:7px;padding:.02rem .28rem}
+  .day-body{border:1px solid var(--warm-gray);border-top:none;border-radius:0 0 3px 3px;min-height:2.1in;padding:.06rem}
+  .a-entry{padding:.09rem .12rem .09rem .17rem;margin-bottom:.09rem;border-left:2.5px solid var(--gc);background:var(--cream);border-radius:0 2px 2px 0;display:flex;align-items:flex-start;gap:.15rem}
+  .a-entry.is-test{border-left-color:var(--hl)!important;background:color-mix(in srgb,var(--hl) 7%,white)}
+  .a-check-wrap{padding-top:.05rem;flex-shrink:0}
+  .a-check{width:11px;height:11px;border:1.5px solid var(--gc);border-radius:2px;display:inline-block;cursor:pointer;accent-color:var(--gc)}
+  .a-entry.is-test .a-check{border-color:var(--hl);accent-color:var(--hl)}
+  .a-text{flex:1}
+  .a-subject{font-weight:600;font-size:0.77rem;color:var(--gc);line-height:1.3}
+  .a-entry.is-test .a-subject{color:var(--hl)}
+  .test-badge{display:inline-block;font-size:0.64rem;font-weight:700;text-transform:uppercase;background:var(--hl);color:white;border-radius:6px;padding:.02rem .3rem;margin-left:.25rem;vertical-align:middle;letter-spacing:.04em}
+  .a-lesson{font-size:0.72rem;color:var(--brown);line-height:1.35;white-space:pre-line;margin-top:.04rem}
+  .weekly-sect{border-top:2px solid var(--gc);padding-top:.1rem;margin-bottom:.12in}
+  .weekly-h{font-family:Georgia,'Palatino Linotype','Book Antiqua',serif;font-size:0.94rem;color:var(--gc);font-weight:700;margin-bottom:.08rem}
+  .weekly-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(1.6in,1fr));gap:.08rem}
+  .weekly-card{border:1px solid var(--warm-gray);border-left:2.5px solid var(--gc);border-radius:0 3px 3px 0;padding:.09rem .15rem .09rem .17rem;font-size:0.74rem;display:flex;gap:.12rem;align-items:flex-start}
+  .weekly-subj{font-weight:600;color:var(--gc);font-size:0.76rem}
+  .weekly-desc{color:var(--brown);line-height:1.4;white-space:pre-line}
+  .page-foot{padding-top:.08in;border-top:1px solid var(--warm-gray);display:flex;justify-content:space-between;font-size:0.7rem;color:#bbb}
+  @media print{
+    body{background:white}
+    .screen-bar{display:none}
+    .page-wrap{padding:0}
+    .page{width:100%;min-height:0;box-shadow:none}
+    @page{size:8.5in 11in portrait;margin:0}
+    input[type=checkbox]{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .a-entry.is-test,.a-entry{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+<div class="screen-bar">
+  <strong>{{ student.name }} — {{ grade.name if grade else '' }}</strong>
+  <div style="display:flex;gap:.5rem">
+    <button onclick="window.print()">🖨 Print</button>
+    <button onclick="window.close()" style="background:rgba(255,255,255,.2);color:white;border:1px solid rgba(255,255,255,.4)">✕</button>
+  </div>
+</div>
+<div class="page-wrap">
+  <div class="page">
+    <div class="banner">
+      <div class="banner-left">
+        <h1>{{ print_header_line1 }}</h1>
+        {% if print_header_line2 %}<div class="sub">{{ print_header_line2 }}</div>{% endif %}
+        {% if print_tagline %}<div class="tagline">{{ print_tagline }}</div>{% endif %}
+        <div class="student-name">{{ student.name }}</div>
+      </div>
+      <div class="banner-meta">
+        {% if week_num %}<strong>Week {{ week_num }}</strong>{% endif %}
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="days-grid">
+        {% for day in days %}
+        <div class="day-col">
+          <div class="day-head">
+            <div class="day-name">{{ day }}</div>
+            <div class="day-info">
+              <span>{% if week_dates.get(day) %}{{ week_dates[day] }}{% endif %}</span>
+              {% if week_school_days.get(day) %}<span class="day-num">Day {{ week_school_days[day] }}</span>{% endif %}
+            </div>
+          </div>
+          <div class="day-body">
+            {% for e in grade_schedule[day] %}
+            <div class="a-entry{% if e.highlighted %} is-test{% endif %}">
+              <div class="a-check-wrap"><input type="checkbox" class="a-check"></div>
+              <div class="a-text">
+                <div class="a-subject">{{ e.subject }}{% if e.highlighted %}<span class="test-badge">⚑</span>{% endif %}</div>
+                <div class="a-lesson">{{ e.lesson_text }}</div>
+              </div>
+            </div>
+            {% endfor %}
+            {% if not grade_schedule[day] %}<div style="color:#ccc;font-size:0.72rem;font-style:italic;padding:.08rem .12rem">—</div>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% if grade_weekly %}
+      <div class="weekly-sect">
+        <div class="weekly-h">📝 Weekly Assignments</div>
+        <div class="weekly-grid">
+          {% for w in grade_weekly %}
+          <div class="weekly-card">
+            <div class="a-check-wrap" style="padding-top:.05rem"><input type="checkbox" class="a-check"></div>
+            <div>
+              <div class="weekly-subj">{{ w.subject }}</div>
+              <div class="weekly-desc">{{ w.description }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      <div class="page-foot">
+        <span>{{ print_footer_left }}</span>
+        <span>{{ print_footer_center }}</span>
+        <span>{{ print_footer_right if print_footer_right else (grade.name if grade else '') }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

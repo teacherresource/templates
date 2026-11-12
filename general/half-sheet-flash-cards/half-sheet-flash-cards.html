@@ -1,0 +1,1211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Half-Sheet Flash Cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Nunito:ital,wght@0,400;0,700;1,400;1,700&family=Patrick+Hand&family=Roboto+Slab:wght@400;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,700;1,8..60,400;1,8..60,700&display=swap">
+<style id="page-rule">@page { size: 8.5in 11in; margin: 0; }</style>
+<style>
+/* Layout: a gridded cutting mat; deck rail on the left, true-proportion cards in the middle, style tools on the right */
+:root {
+  --mat: #dbe5df;
+  --mat-line: rgba(28, 84, 62, .09);
+  --mat-major: rgba(28, 84, 62, .16);
+  --panel: #f6f9f7;
+  --sunk: #e9efeb;
+  --line: #c4d1ca;
+  --fg: #14201a;
+  --muted: #56685f;
+  --accent: #1d6b50;
+  --accent-ink: #ffffff;
+  --accent-soft: #d6ebe1;
+  --warn: #9a3a0b;
+  --warn-bg: #fbe5d2;
+  --paper: #ffffff;
+  --ui: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --mat: #0f1c17; --mat-line: rgba(150, 215, 185, .05); --mat-major: rgba(150, 215, 185, .10);
+    --panel: #172520; --sunk: #12201b; --line: #2b3d35; --fg: #e2ebe6; --muted: #91a49a;
+    --accent: #52c095; --accent-ink: #08160f; --accent-soft: #1d3a2f; --warn: #ffb27d; --warn-bg: #3a2416;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --mat: #0f1c17; --mat-line: rgba(150, 215, 185, .05); --mat-major: rgba(150, 215, 185, .10);
+  --panel: #172520; --sunk: #12201b; --line: #2b3d35; --fg: #e2ebe6; --muted: #91a49a;
+  --accent: #52c095; --accent-ink: #08160f; --accent-soft: #1d3a2f; --warn: #ffb27d; --warn-bg: #3a2416;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background-color: var(--mat);
+  background-image:
+    linear-gradient(var(--mat-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mat-major) 1px, transparent 1px),
+    linear-gradient(var(--mat-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mat-line) 1px, transparent 1px);
+  background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+  color: var(--fg);
+  font: 14px/1.45 var(--ui);
+  min-height: 100vh;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+[hidden] { display: none !important; }
+
+/* ---------- top bar ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+  padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.brand { display: flex; align-items: center; gap: 8px; font: 500 11px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.brand svg { width: 26px; height: 26px; flex: none; }
+.title-input {
+  flex: 1 1 220px; min-width: 0;
+  border: 1px solid transparent; border-radius: 6px; background: transparent;
+  font-size: 19px; font-weight: 600; padding: 4px 8px;
+}
+.title-input:hover { border-color: var(--line); }
+.title-input:focus { border-color: var(--accent); outline: none; background: var(--paper); color: #14201a; }
+.top-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.saved { font: 11px var(--mono); color: var(--muted); margin-right: 4px; white-space: nowrap; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--line); background: var(--panel);
+  border-radius: 6px; padding: 6px 11px; font-weight: 500; line-height: 1.3;
+}
+.btn:hover { background: var(--sunk); }
+.btn svg { width: 15px; height: 15px; flex: none; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.ghost { border-color: transparent; background: transparent; }
+.btn.ghost:hover { background: var(--sunk); }
+.btn.danger-armed { background: var(--warn-bg); border-color: var(--warn); color: var(--warn); }
+.icon-btn { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; width: 32px; height: 32px; display: inline-grid; place-items: center; padding: 0; }
+.icon-btn:hover { background: var(--sunk); }
+.icon-btn:disabled { opacity: .4; cursor: default; }
+.icon-btn svg { width: 16px; height: 16px; }
+
+/* ---------- workspace grid ---------- */
+.work {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr) 300px;
+  grid-template-areas: "rail stage tools";
+  gap: 20px; align-items: start;
+  max-width: 1520px; margin: 0 auto;
+  padding-block: 20px 60px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.rail { grid-area: rail; }
+.stage { grid-area: stage; min-width: 0; }
+.tools { grid-area: tools; }
+@media (max-width: 1180px) {
+  .work { grid-template-columns: 230px minmax(0, 1fr); grid-template-areas: "rail tools" "rail stage"; }
+  .tools { position: static !important; }
+}
+@media (max-width: 760px) {
+  .work { grid-template-columns: minmax(0, 1fr); grid-template-areas: "rail" "stage" "tools"; }
+  .rail { position: static !important; max-height: none !important; }
+  .rail ol { max-height: 220px; }
+}
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+
+/* ---------- deck rail ---------- */
+.rail { position: sticky; top: 76px; display: flex; flex-direction: column; max-height: calc(100vh - 96px); }
+.rail-head { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 14px 8px; }
+.eyebrow { font: 500 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.rail ol { list-style: none; margin: 0; padding: 0 8px 8px; overflow-y: auto; flex: 1 1 auto; min-height: 60px; }
+.rail-item {
+  width: 100%; text-align: left; display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 6px; align-items: start;
+  border: 1px solid transparent; background: transparent; border-radius: 6px; padding: 7px 8px;
+}
+.rail-item:hover { background: var(--sunk); }
+.rail-item.on { background: var(--accent-soft); border-color: var(--accent); }
+.ri-num { font: 500 11px/1.7 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.ri-text { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.35; overflow-wrap: anywhere; }
+.ri-text.empty { color: var(--muted); font-style: italic; }
+.ri-warn { font: 700 11px/18px var(--mono); width: 18px; height: 18px; text-align: center; border-radius: 50%; background: var(--warn-bg); color: var(--warn); }
+.rail-foot { border-top: 1px solid var(--line); padding: 10px 12px 12px; display: grid; gap: 8px; }
+.rail-foot .btn { justify-content: center; }
+.check { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; cursor: pointer; }
+.check input { margin-top: 3px; accent-color: var(--accent); }
+.check small { display: block; color: var(--muted); font-size: 12px; }
+
+/* ---------- stage ---------- */
+.stage-inner { max-width: 760px; margin: 0 auto; display: grid; gap: 16px; }
+.banner { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 10px 12px 10px 14px; border-radius: 10px; background: var(--accent-soft); border: 1px solid var(--accent); }
+.banner p { margin: 0; flex: 1 1 260px; }
+.card-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.card-bar h2 { margin: 0; font-size: 15px; font-weight: 600; }
+.card-bar h2 .mono { color: var(--muted); font-weight: 400; font-size: 13px; }
+.card-tools { display: flex; gap: 6px; }
+.tag-row { display: flex; gap: 10px; align-items: center; }
+.tag-row label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.tag-row input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 6px 10px; }
+
+.side { display: grid; gap: 8px; }
+.side-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.side-label { font: 600 11px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+.side-label em { font-style: normal; color: var(--muted); font-weight: 400; }
+.side-spec { margin-left: auto; font-size: 11.5px; color: var(--muted); }
+.warn-chip { font-size: 12px; background: var(--warn-bg); color: var(--warn); border-radius: 999px; padding: 2px 10px; border: 0; }
+.warn-chip:hover { text-decoration: underline; }
+.scaler {
+  position: relative; width: 100%; max-width: 100%; aspect-ratio: 8.5 / 5.5;
+  background: var(--paper); border-radius: 2px; overflow: hidden; cursor: text;
+  box-shadow: 0 1px 1px rgba(0,0,0,.12), 0 10px 26px -10px rgba(0,0,0,.35);
+  outline: 2px solid transparent; outline-offset: 5px; transition: outline-color .15s;
+}
+.side.active .scaler { outline-color: var(--accent); }
+.scaler > .face { position: absolute; top: 0; left: 0; transform: scale(var(--k, 1)); transform-origin: 0 0; }
+.empty-stage { text-align: center; padding: 60px 20px; border: 2px dashed var(--line); border-radius: 12px; color: var(--muted); display: grid; gap: 12px; justify-items: center; }
+.kbd-hint { text-align: center; color: var(--muted); font-size: 12px; }
+kbd { font: 11px var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; background: var(--panel); }
+
+/* ---------- the card face (screen + print share this) ---------- */
+.face {
+  width: 8.5in; height: 5.5in;
+  background: #ffffff; color: #1b1f24;
+  position: relative; display: flex; flex-direction: column;
+  padding: .55in .65in;
+  overflow: hidden;
+}
+.face-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.face-text { line-height: 1.22; white-space: pre-wrap; overflow-wrap: anywhere; outline: none; min-height: 1.22em; }
+.face[data-valign="middle"] .face-text { margin-block: auto; }
+.face-text:empty::before { content: attr(data-ph); color: #a3abb2; }
+.face-tag { position: absolute; top: .26in; left: .4in; right: 1.4in; font: 600 9pt/1.2 'IBM Plex Sans', Arial, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: #6f7a83; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.face-num { position: absolute; bottom: .24in; right: .4in; font: 9pt/1 'IBM Plex Mono', Consolas, monospace; color: #8a939b; }
+
+#measure { position: fixed; left: -20000px; top: 0; visibility: hidden; pointer-events: none; }
+
+/* ---------- style tools ---------- */
+.tools { position: sticky; top: 76px; padding: 14px; }
+.tools fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 16px; min-width: 0; }
+.tools fieldset:disabled { opacity: .5; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--sunk); border: 1px solid var(--line); border-radius: 8px; padding: 3px; gap: 3px; }
+.seg button { border: 0; background: transparent; border-radius: 6px; padding: 6px; font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--panel); box-shadow: 0 1px 2px rgba(0,0,0,.15); color: var(--accent); }
+.tool-group { display: grid; gap: 7px; }
+.tool-label { display: flex; justify-content: space-between; align-items: baseline; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip {
+  border: 1px solid var(--line); background: var(--panel); border-radius: 6px;
+  padding: 5px 0; min-width: 38px; text-align: center; font-variant-numeric: tabular-nums;
+}
+.chip:hover { background: var(--sunk); }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.chip.fit { padding-inline: 10px; font-weight: 600; color: var(--accent); }
+.font-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+.font-chip { display: grid; justify-items: center; gap: 1px; padding: 6px 2px 5px; min-width: 0; }
+.font-chip .aa { font-size: 21px; line-height: 1.1; }
+.font-chip .fn { font-size: 11px; opacity: .8; }
+.row-chips { display: flex; flex-wrap: wrap; gap: 5px 12px; }
+.row-chips .chips { gap: 4px; }
+.chip svg { width: 16px; height: 16px; vertical-align: -3px; }
+.chip.b { font-weight: 700; }
+.chip.i { font-style: italic; font-family: Georgia, serif; }
+.chip.wide { padding-inline: 10px; }
+.ink { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--line); padding: 0; }
+.ink[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--accent); }
+.tools .apply { justify-content: center; width: 100%; }
+.tools .note { font-size: 12px; color: var(--muted); margin: -8px 0 0; }
+
+/* ---------- dialogs ---------- */
+dialog {
+  border: 1px solid var(--line); border-radius: 12px; padding: 0;
+  background: var(--panel); color: var(--fg);
+  width: min(660px, calc(100vw - 32px)); max-height: calc(100vh - 40px);
+}
+dialog::backdrop { background: rgba(8, 20, 15, .45); }
+.dlg-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.dlg-head h3 { margin: 0; font-size: 16px; }
+.dlg-body { padding: 16px 18px; display: grid; gap: 16px; }
+.dlg-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line); background: var(--sunk); border-radius: 0 0 12px 12px; flex-wrap: wrap; }
+.opt { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; min-width: 0; }
+.opt legend { padding: 0; margin-bottom: 6px; }
+.opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 520px) { .opt-grid { grid-template-columns: minmax(0, 1fr); } }
+.radio-card small { line-height: 1.35; display: block; }
+.radio-card { display: flex; gap: 8px; align-items: flex-start; border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; cursor: pointer; background: var(--panel); }
+.radio-card:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.radio-card:has(input:disabled) { opacity: .45; cursor: not-allowed; }
+.radio-card input { margin-top: 3px; accent-color: var(--accent); }
+.radio-card b { display: block; font-weight: 600; }
+.radio-card small { color: var(--muted); font-size: 12px; }
+.summary { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; background: var(--sunk); border-radius: 10px; padding: 14px; }
+.summary p { margin: 0; flex: 1 1 220px; }
+.minis { display: flex; gap: 14px; flex-wrap: wrap; }
+.mini-wrap { display: grid; gap: 4px; justify-items: center; font: 10.5px var(--mono); color: var(--muted); }
+.mini { background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.15), 0 2px 6px rgba(0,0,0,.15); display: grid; color: #3b444c; font: 600 10px var(--mono); }
+.mini.letter { width: 62px; height: 80px; grid-template-rows: 1fr 1fr; }
+.mini.half { width: 80px; height: 52px; }
+.mini > div { display: grid; place-items: center; }
+.mini.letter > div + div { border-top: 1px dashed #aab2b8; }
+.mini .rot { transform: rotate(180deg); }
+.tips { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; display: grid; gap: 3px; }
+.tips b { color: var(--fg); font-weight: 600; }
+textarea.bulk { width: 100%; min-height: 220px; resize: vertical; border: 1px solid var(--line); border-radius: 8px; padding: 10px; font: 13px/1.5 var(--mono); background: var(--paper); color: #14201a; }
+.hint { color: var(--muted); font-size: 13px; margin: 0; }
+.hint code { font: 12px var(--mono); background: var(--sunk); padding: 1px 4px; border-radius: 4px; }
+
+/* ---------- toast ---------- */
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 50;
+  background: var(--fg); color: var(--mat); border-radius: 8px; padding: 9px 10px 9px 14px;
+  display: flex; gap: 12px; align-items: center; box-shadow: 0 8px 24px rgba(0,0,0,.3);
+  max-width: calc(100vw - 32px);
+}
+.toast button { background: transparent; border: 1px solid currentColor; border-radius: 6px; padding: 3px 10px; color: inherit; font-weight: 600; }
+
+/* ---------- print ---------- */
+#print-root { display: none; }
+.sheet { width: 8.5in; position: relative; overflow: hidden; background: #fff; }
+.sheet.letter { height: 10.98in; display: grid; grid-template-rows: 1fr 1fr; }
+.sheet.half { height: 5.48in; }
+.sheet:not(:last-child) { break-after: page; page-break-after: always; }
+.sheet .slot { position: relative; overflow: hidden; }
+.sheet .slot .face { height: 100%; }
+.sheet .slot .face.rot { transform: rotate(180deg); }
+.sheet.guides::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px dashed #b4bcc2; }
+.sheet.guides::before { content: "✂"; position: absolute; left: .12in; top: 50%; transform: translateY(-58%); font-size: 10pt; color: #9aa3aa; background: #fff; padding: 0 2px; z-index: 1; }
+
+@media print {
+  html, body { background: #fff !important; }
+  body { min-height: 0; }
+  .app, dialog, .toast, #measure { display: none !important; }
+  #print-root { display: block; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand" aria-hidden="true">
+      <svg viewBox="0 0 26 26"><rect x="2" y="3" width="22" height="20" rx="1.5" fill="var(--paper)" stroke="var(--accent)" stroke-width="1.5"/><path d="M2 13h22" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="2 2"/><path d="M6 8h10M6 18h7" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Half-Sheet
+    </div>
+    <input id="deckTitle" class="title-input" type="text" aria-label="Deck name" placeholder="Name this deck">
+    <div class="top-actions">
+      <span class="saved" id="savedNote" aria-live="polite"></span>
+      <button class="btn" id="bulkBtn" type="button" title="Paste many questions at once">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 3.5h10M3 8h10M3 12.5h6"/><path d="M12.5 10.5v4M10.5 12.5h4"/></svg>Bulk add</button>
+      <button class="btn" id="openBtn" type="button">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M1.5 4.5v8.5h11l2-6h-11l-2 6"/><path d="M1.5 4.5v-1.5h4l1.5 1.5h5v2.5"/></svg>Open</button>
+      <button class="btn" id="saveBtn" type="button" title="Save deck file (Ctrl+S)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v8M4.5 6.5 8 10l3.5-3.5"/><path d="M2.5 11v2.5h11V11"/></svg>Save</button>
+      <button class="btn primary" id="printBtn" type="button" title="Print (Ctrl+P)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M4 6V1.5h8V6"/><rect x="1.5" y="6" width="13" height="6" rx="1"/><path d="M4 10h8v4.5H4z" fill="var(--accent)"/></svg>Print</button>
+      <input type="file" id="fileInput" accept=".json,.txt,.csv,.tsv,application/json,text/plain,text/csv" hidden>
+    </div>
+  </header>
+
+  <main class="work">
+    <!-- deck rail -->
+    <aside class="rail panel" aria-label="Cards in this deck">
+      <div class="rail-head">
+        <span class="eyebrow">Deck</span>
+        <span class="eyebrow mono" id="cardCount"></span>
+      </div>
+      <ol id="cardList"></ol>
+      <div class="rail-foot">
+        <button class="btn primary" id="addBtn" type="button" title="Add card (Ctrl+Enter)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>Add card</button>
+        <label class="check"><input type="checkbox" id="optNumbers"><span>Card numbers in the corner</span></label>
+        <button class="btn" id="shrinkAllBtn" type="button">Shrink text that runs off</button>
+        <button class="btn ghost" id="newDeckBtn" type="button">Start a new deck</button>
+      </div>
+    </aside>
+
+    <!-- editor -->
+    <section class="stage" aria-label="Card editor">
+      <div class="stage-inner">
+        <div class="banner" id="exampleBanner" hidden>
+          <p>This is an example deck so you can see how cards look. Edit it, or clear it and start your own.</p>
+          <button class="btn primary" type="button" id="clearExampleBtn">Start my own deck</button>
+          <button class="btn ghost" type="button" id="dismissBannerBtn">Keep example</button>
+        </div>
+
+        <div id="editor">
+          <div class="stage-inner">
+            <div class="card-bar">
+              <h2>Card <span id="edNum">1</span> <span class="mono" id="edOf"></span></h2>
+              <div class="card-tools">
+                <button class="icon-btn" id="upBtn" type="button" title="Move card up" aria-label="Move card up"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V3M4 7l4-4 4 4"/></svg></button>
+                <button class="icon-btn" id="downBtn" type="button" title="Move card down" aria-label="Move card down"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v10M4 9l4 4 4-4"/></svg></button>
+                <button class="icon-btn" id="dupBtn" type="button" title="Duplicate card" aria-label="Duplicate card"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="5" y="5" width="9" height="9" rx="1"/><path d="M11 5V2H2v9h3"/></svg></button>
+                <button class="icon-btn" id="delBtn" type="button" title="Delete card" aria-label="Delete card"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4h11M6 4V2.5h4V4M4 4l.7 9.5h6.6L12 4"/></svg></button>
+              </div>
+            </div>
+            <div class="tag-row">
+              <label for="tagInput">Corner label</label>
+              <input id="tagInput" type="text" placeholder="Optional, e.g. Chapter 3 or Vocabulary" maxlength="60">
+            </div>
+
+            <div class="side" data-side="front" id="frontSide">
+              <div class="side-head">
+                <span class="side-label">Front <em>· question</em></span>
+                <button class="warn-chip" type="button" data-fit="front" hidden>Text runs off the card · Fit it</button>
+                <span class="side-spec mono" id="frontSpec"></span>
+              </div>
+              <div class="scaler" id="frontSlot"></div>
+            </div>
+
+            <div class="side" data-side="back" id="backSide">
+              <div class="side-head">
+                <span class="side-label">Back <em>· answer</em></span>
+                <button class="warn-chip" type="button" data-fit="back" hidden>Text runs off the card · Fit it</button>
+                <span class="side-spec mono" id="backSpec"></span>
+              </div>
+              <div class="scaler" id="backSlot"></div>
+            </div>
+            <p class="kbd-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> adds the next card · <kbd>Ctrl</kbd> + <kbd>S</kbd> saves · <kbd>Ctrl</kbd> + <kbd>P</kbd> prints</p>
+          </div>
+        </div>
+
+        <div class="empty-stage" id="emptyStage" hidden>
+          <strong>This deck has no cards yet.</strong>
+          <span>Add one card at a time, or paste a whole list with Bulk add.</span>
+          <div class="top-actions"><button class="btn primary" type="button" id="emptyAdd">Add card</button><button class="btn" type="button" id="emptyBulk">Bulk add</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- style tools -->
+    <aside class="tools panel" aria-label="Text style">
+      <fieldset id="toolSet">
+        <div class="tool-group">
+          <span class="eyebrow">Styling</span>
+          <div class="seg" role="group" aria-label="Which side to style">
+            <button type="button" data-face="front">Front</button>
+            <button type="button" data-face="back">Back</button>
+          </div>
+        </div>
+        <div class="tool-group">
+          <div class="tool-label"><span class="eyebrow">Size</span><span class="eyebrow">points</span></div>
+          <div class="chips" id="sizeChips"></div>
+        </div>
+        <div class="tool-group">
+          <span class="eyebrow">Font</span>
+          <div class="font-grid" id="fontChips"></div>
+        </div>
+        <div class="tool-group">
+          <span class="eyebrow">Style &amp; alignment</span>
+          <div class="row-chips">
+            <div class="chips">
+              <button class="chip b" type="button" data-k="bold" title="Bold">B</button>
+              <button class="chip i" type="button" data-k="italic" title="Italic">I</button>
+            </div>
+            <div class="chips">
+              <button class="chip" type="button" data-k="align" data-v="left" title="Align left" aria-label="Align left"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 3h12M2 6.5h8M2 10h12M2 13.5h8"/></svg></button>
+              <button class="chip" type="button" data-k="align" data-v="center" title="Center" aria-label="Center"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 3h12M4 6.5h8M2 10h12M4 13.5h8"/></svg></button>
+              <button class="chip" type="button" data-k="align" data-v="right" title="Align right" aria-label="Align right"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 3h12M6 6.5h8M2 10h12M6 13.5h8"/></svg></button>
+            </div>
+            <div class="chips">
+              <button class="chip wide" type="button" data-k="valign" data-v="top">Top</button>
+              <button class="chip wide" type="button" data-k="valign" data-v="middle">Middle</button>
+            </div>
+          </div>
+        </div>
+        <div class="tool-group">
+          <span class="eyebrow">Ink</span>
+          <div class="chips" id="inkChips"></div>
+        </div>
+        <button class="btn apply" type="button" id="applyAllBtn">Use this style on every front</button>
+        <p class="note">New cards start with the last style you applied to the whole deck.</p>
+      </fieldset>
+    </aside>
+  </main>
+</div>
+
+<!-- print dialog -->
+<dialog id="printDlg" aria-labelledby="printTitle">
+  <form method="dialog" id="printForm">
+    <div class="dlg-head"><h3 id="printTitle">Print cards</h3><button class="btn ghost" value="cancel" type="submit">Close</button></div>
+    <div class="dlg-body">
+      <fieldset class="opt">
+        <legend class="eyebrow">Paper</legend>
+        <div class="opt-grid">
+          <label class="radio-card"><input type="radio" name="paper" value="letter"><span><b>Letter, 2 cards per sheet</b><small>8.5 × 11 in, cut in half to 8.5 × 5.5</small></span></label>
+          <label class="radio-card"><input type="radio" name="paper" value="half"><span><b>Half-letter paper</b><small>8.5 × 5.5 in sheets or card stock, 1 per page</small></span></label>
+        </div>
+      </fieldset>
+      <fieldset class="opt">
+        <legend class="eyebrow">What to print</legend>
+        <div class="opt-grid">
+          <label class="radio-card"><input type="radio" name="sides" value="duplex"><span><b>Fronts and backs</b><small>Double-sided: answer prints behind its question</small></span></label>
+          <label class="radio-card"><input type="radio" name="sides" value="fold"><span><b>Question above answer</b><small>Single-sided, one card per sheet, fold on the line</small></span></label>
+          <label class="radio-card"><input type="radio" name="sides" value="fronts"><span><b>Questions only</b><small>Fronts of every card</small></span></label>
+          <label class="radio-card"><input type="radio" name="sides" value="backs"><span><b>Answers only</b><small>Backs of every card</small></span></label>
+        </div>
+      </fieldset>
+      <div class="opt">
+        <label class="check" id="guidesRow"><input type="checkbox" id="optGuides"><span>Dashed cut line across the middle</span></label>
+        <label class="check"><input type="checkbox" id="optRotate"><span>Turn answers upside down<small>Turn this on if your backs come out upside down, or for fold-over cards you flip sideways.</small></span></label>
+      </div>
+      <div class="summary">
+        <p id="printSummary"></p>
+        <div class="minis" id="minis"></div>
+      </div>
+      <ul class="tips" id="printTips"></ul>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn" value="cancel" type="submit">Cancel</button>
+      <button class="btn primary" type="button" id="doPrint">Open print dialog</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- bulk add dialog -->
+<dialog id="bulkDlg" aria-labelledby="bulkTitle">
+  <form method="dialog">
+    <div class="dlg-head"><h3 id="bulkTitle">Bulk add cards</h3><button class="btn ghost" value="cancel" type="submit">Close</button></div>
+    <div class="dlg-body">
+      <p class="hint">One card per line. Put the question first, then a <code>|</code> or a tab, then the answer. You can paste two columns straight from a spreadsheet. Type <code>\n</code> for a line break inside a card.</p>
+      <textarea class="bulk" id="bulkText" spellcheck="false" placeholder="What is the capital of Peru? | Lima&#10;Photosynthesis | How plants turn light, water and CO₂ into sugar&#10;7 × 8 | 56"></textarea>
+      <label class="check"><input type="checkbox" id="bulkFit" checked><span>Size the text to fit each card<small>Picks the largest size that fits, starting from your deck style.</small></span></label>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn" value="cancel" type="submit">Cancel</button>
+      <button class="btn primary" type="button" id="bulkAdd" disabled>Add cards</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" hidden><span class="t-msg"></span><button type="button" class="t-act" hidden></button></div>
+<div id="measure" aria-hidden="true"></div>
+<div id="print-root"></div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (s) => document.querySelector(s);
+  const el = (tag, cls) => { const e = document.createElement(tag); if (cls) e.className = cls; return e; };
+
+  const SIZES = [16, 20, 24, 28, 36, 48, 64, 80];
+  const FONTS = {
+    clean: { label: 'Clean',   stack: "'Atkinson Hyperlegible', Verdana, Arial, sans-serif" },
+    serif: { label: 'Serif',   stack: "'Source Serif 4', Georgia, 'Times New Roman', serif" },
+    round: { label: 'Rounded', stack: "'Nunito', 'Trebuchet MS', Arial, sans-serif" },
+    hand:  { label: 'Hand',    stack: "'Patrick Hand', 'Comic Sans MS', 'Segoe Print', cursive" },
+    slab:  { label: 'Slab',    stack: "'Roboto Slab', Rockwell, Georgia, serif" },
+    mono:  { label: 'Mono',    stack: "'JetBrains Mono', Consolas, 'Courier New', monospace" },
+  };
+  const INKS = { ink: '#1b1f24', navy: '#1d3c8f', red: '#b3261e', green: '#17663a', plum: '#6a2c8a', gray: '#5f6870' };
+  const INK_NAMES = { ink: 'Black', navy: 'Navy', red: 'Red', green: 'Green', plum: 'Plum', gray: 'Gray' };
+  const STORE = 'half-sheet-flashcards-v1';
+  const DEF_FRONT = { size: 36, font: 'clean', bold: true, italic: false, align: 'center', valign: 'middle', ink: 'ink' };
+  const DEF_BACK  = { size: 28, font: 'clean', bold: false, italic: false, align: 'center', valign: 'middle', ink: 'ink' };
+
+  const uid = () => Math.random().toString(36).slice(2, 10);
+
+  function sampleDeck() {
+    const mk = (front, back, tag, fs = {}, bs = {}) => ({ id: uid(), front, back, tag, fs: { ...DEF_FRONT, ...fs }, bs: { ...DEF_BACK, ...bs } });
+    return {
+      title: 'Cell Biology, Unit 3 (example)',
+      example: true,
+      defaults: { front: { ...DEF_FRONT }, back: { ...DEF_BACK } },
+      opts: { numbers: true },
+      print: { paper: 'letter', sides: 'duplex', guides: true, rotate: false },
+      sel: 0, face: 'front',
+      cards: [
+        mk("Which organelle makes most of a cell's ATP?", 'The mitochondrion, through cellular respiration.', 'Organelles'),
+        mk('What do ribosomes do?', 'They build proteins by reading mRNA and linking amino acids together.', 'Organelles'),
+        mk('State the three parts of cell theory.', '1. All living things are made of one or more cells.\n2. The cell is the basic unit of life.\n3. All cells come from existing cells.', 'Cell theory', {}, { size: 24, align: 'left' }),
+        mk('Osmosis', 'Diffusion of water across a selectively permeable membrane, toward the side with more dissolved solute.', 'Transport', { size: 64, font: 'serif', italic: true }),
+        mk("Prokaryote vs. eukaryote: what's the key difference?", "Eukaryotes have a nucleus and membrane-bound organelles. Prokaryotes don't.", 'Cell types', { ink: 'navy' }, { font: 'hand', size: 36 }),
+      ],
+    };
+  }
+
+  function blankDeck() {
+    const d = { title: 'Untitled deck', example: false, defaults: { front: { ...DEF_FRONT }, back: { ...DEF_BACK } }, opts: { numbers: true }, print: { paper: 'letter', sides: 'duplex', guides: true, rotate: false }, sel: 0, face: 'front', cards: [] };
+    d.cards.push(blankCard(d));
+    return d;
+  }
+  function blankCard(d = state) { return { id: uid(), front: '', back: '', tag: '', fs: { ...d.defaults.front }, bs: { ...d.defaults.back } }; }
+
+  function normStyle(s, def) {
+    const o = { ...def, ...(s && typeof s === 'object' ? s : {}) };
+    o.size = Math.max(8, Math.min(140, Number(o.size) || def.size));
+    if (!FONTS[o.font]) o.font = def.font;
+    if (!INKS[o.ink]) o.ink = def.ink;
+    if (!['left', 'center', 'right'].includes(o.align)) o.align = def.align;
+    if (!['top', 'middle'].includes(o.valign)) o.valign = def.valign;
+    o.bold = !!o.bold; o.italic = !!o.italic;
+    return o;
+  }
+  function normalize(raw) {
+    if (!raw || !Array.isArray(raw.cards)) return null;
+    const d = blankDeck();
+    d.title = typeof raw.title === 'string' ? raw.title : d.title;
+    d.example = !!raw.example;
+    d.defaults = { front: normStyle(raw.defaults && raw.defaults.front, DEF_FRONT), back: normStyle(raw.defaults && raw.defaults.back, DEF_BACK) };
+    d.opts = { numbers: raw.opts ? raw.opts.numbers !== false : true };
+    const p = raw.print || {};
+    d.print = {
+      paper: p.paper === 'half' ? 'half' : 'letter',
+      sides: ['duplex', 'fold', 'fronts', 'backs'].includes(p.sides) ? p.sides : 'duplex',
+      guides: p.guides !== false, rotate: !!p.rotate,
+    };
+    d.cards = raw.cards.map((c) => ({
+      id: uid(),
+      front: String(c.front ?? c.question ?? ''),
+      back: String(c.back ?? c.answer ?? ''),
+      tag: String(c.tag ?? ''),
+      fs: normStyle(c.fs, d.defaults.front),
+      bs: normStyle(c.bs, d.defaults.back),
+    }));
+    d.sel = Math.min(Math.max(0, Number(raw.sel) || 0), Math.max(0, d.cards.length - 1));
+    d.face = raw.face === 'back' ? 'back' : 'front';
+    return d;
+  }
+
+  function load() {
+    try {
+      const s = localStorage.getItem(STORE);
+      if (s) { const d = normalize(JSON.parse(s)); if (d) return d; }
+    } catch (e) { /* storage unavailable */ }
+    return sampleDeck();
+  }
+
+  let state = load();
+  let saveTimer = null;
+  function persist() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try {
+        localStorage.setItem(STORE, JSON.stringify(state));
+        const t = new Date();
+        $('#savedNote').textContent = 'Saved in this browser ' + t.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      } catch (e) {
+        $('#savedNote').textContent = 'Not autosaved. Use Save to keep a file.';
+      }
+    }, 300);
+  }
+
+  const cur = () => state.cards[state.sel];
+  const styleOf = (card, side) => (side === 'front' ? card.fs : card.bs);
+
+  /* ---------- faces ---------- */
+  function applyStyle(face, st) {
+    const t = face.querySelector('.face-text');
+    face.dataset.valign = st.valign;
+    t.style.fontSize = st.size + 'pt';
+    t.style.fontFamily = FONTS[st.font].stack;
+    t.style.fontWeight = st.bold ? '700' : '400';
+    t.style.fontStyle = st.italic ? 'italic' : 'normal';
+    t.style.textAlign = st.align;
+    t.style.color = INKS[st.ink];
+  }
+
+  function makeFace(card, side, i, o = {}) {
+    const st = styleOf(card, side);
+    const face = el('div', 'face');
+    face.dataset.side = side;
+    const tag = el('div', 'face-tag'); tag.textContent = card.tag || '';
+    const body = el('div', 'face-body');
+    const t = el('div', 'face-text'); t.textContent = card[side] || '';
+    const num = el('div', 'face-num'); num.textContent = (i + 1) + ' · ' + (side === 'front' ? 'Q' : 'A'); num.hidden = !state.opts.numbers;
+    body.append(t); face.append(tag, body, num);
+    applyStyle(face, o.size ? { ...st, size: o.size } : st);
+    if (o.editable) makeEditable(face, t, card, side);
+    return face;
+  }
+
+  function makeEditable(face, t, card, side) {
+    t.dataset.ph = side === 'front' ? 'Type the question…' : 'Type the answer…';
+    t.setAttribute('role', 'textbox');
+    t.setAttribute('aria-multiline', 'true');
+    t.setAttribute('aria-label', side === 'front' ? 'Question' : 'Answer');
+    t.spellcheck = true;
+    let plain = true;
+    try { t.contentEditable = 'plaintext-only'; if (t.contentEditable !== 'plaintext-only') plain = false; } catch (e) { plain = false; }
+    if (!plain) {
+      t.contentEditable = 'true';
+      t.addEventListener('paste', (ev) => {
+        ev.preventDefault();
+        const txt = (ev.clipboardData || window.clipboardData).getData('text/plain');
+        document.execCommand('insertText', false, txt);
+      });
+    }
+    t.addEventListener('input', () => {
+      if (!t.textContent) t.innerHTML = '';
+      card[side] = t.innerText.replace(/\n+$/, '');
+      persist();
+      updateRailItem(state.sel);
+      updateEditorWarnings();
+    });
+    t.addEventListener('focus', () => setFace(side, false));
+    face.addEventListener('mousedown', (ev) => {
+      if (t.contains(ev.target)) return;
+      ev.preventDefault();
+      t.focus();
+      caretEnd(t);
+    });
+  }
+  function caretEnd(node) {
+    const r = document.createRange(); r.selectNodeContents(node); r.collapse(false);
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+
+  /* overflow measurement off-screen at true size */
+  function overflows(card, side, size) {
+    const face = makeFace(card, side, 0, { size });
+    $('#measure').append(face);
+    const body = face.querySelector('.face-body');
+    const t = face.querySelector('.face-text');
+    const over = t.offsetHeight > body.clientHeight + 1;
+    face.remove();
+    return over;
+  }
+  function fitSize(card, side, maxSize) {
+    const list = SIZES.filter((s) => !maxSize || s <= maxSize).reverse();
+    for (const s of list) if (!overflows(card, side, s)) return s;
+    return null;
+  }
+
+  /* ---------- rail ---------- */
+  function renderRail() {
+    const ol = $('#cardList');
+    ol.innerHTML = '';
+    state.cards.forEach((c, i) => {
+      const li = el('li');
+      const b = el('button', 'rail-item' + (i === state.sel ? ' on' : ''));
+      b.type = 'button';
+      const n = el('span', 'ri-num'); n.textContent = String(i + 1).padStart(2, '0');
+      const tx = el('span', 'ri-text');
+      const w = el('span', 'ri-warn'); w.textContent = '!'; w.title = 'Text runs off this card';
+      b.append(n, tx, w);
+      if (i === state.sel) b.setAttribute('aria-current', 'true');
+      b.addEventListener('click', () => select(i));
+      li.append(b); ol.append(li);
+      fillRailItem(b, c);
+    });
+    $('#cardCount').textContent = state.cards.length + (state.cards.length === 1 ? ' card' : ' cards');
+  }
+  function fillRailItem(b, c) {
+    const tx = b.querySelector('.ri-text');
+    const first = (c.front || '').trim();
+    tx.textContent = first || 'Blank question';
+    tx.classList.toggle('empty', !first);
+    b.querySelector('.ri-warn').hidden = !(overflows(c, 'front') || overflows(c, 'back'));
+  }
+  function updateRailItem(i) {
+    const b = $('#cardList').children[i] && $('#cardList').children[i].firstChild;
+    if (b && state.cards[i]) fillRailItem(b, state.cards[i]);
+  }
+
+  /* ---------- editor ---------- */
+  function renderEditor() {
+    const has = state.cards.length > 0;
+    $('#editor').hidden = !has;
+    $('#emptyStage').hidden = has;
+    $('#toolSet').disabled = !has;
+    $('#exampleBanner').hidden = !state.example;
+    if (!has) return;
+    const c = cur();
+    $('#edNum').textContent = state.sel + 1;
+    $('#edOf').textContent = 'of ' + state.cards.length;
+    $('#tagInput').value = c.tag;
+    $('#upBtn').disabled = state.sel === 0;
+    $('#downBtn').disabled = state.sel === state.cards.length - 1;
+    ['front', 'back'].forEach((side) => {
+      const slot = $('#' + side + 'Slot');
+      slot.innerHTML = '';
+      slot.append(makeFace(c, side, state.sel, { editable: true }));
+    });
+    markActive();
+    updateEditorWarnings();
+  }
+  function editorFace(side) { return $('#' + side + 'Slot .face'); }
+
+  function updateEditorWarnings() {
+    const c = cur(); if (!c) return;
+    ['front', 'back'].forEach((side) => {
+      const f = editorFace(side); if (!f) return;
+      const over = f.querySelector('.face-text').offsetHeight > f.querySelector('.face-body').clientHeight + 1;
+      document.querySelector('[data-fit="' + side + '"]').hidden = !over;
+      const st = styleOf(c, side);
+      $('#' + side + 'Spec').textContent = st.size + ' pt · ' + FONTS[st.font].label;
+    });
+    const b = $('#cardList').children[state.sel];
+    if (b) b.firstChild.querySelector('.ri-warn').hidden = !(overflows(c, 'front') || overflows(c, 'back'));
+  }
+
+  function markActive() {
+    $('#frontSide').classList.toggle('active', state.face === 'front');
+    $('#backSide').classList.toggle('active', state.face === 'back');
+    updateTools();
+  }
+  function setFace(side, focus = true) {
+    state.face = side;
+    markActive();
+    if (focus) { const t = editorFace(side) && editorFace(side).querySelector('.face-text'); if (t) { t.focus(); caretEnd(t); } }
+  }
+
+  function select(i) {
+    state.sel = i;
+    renderRail();
+    renderEditor();
+    persist();
+    const item = $('#cardList').children[i];
+    if (item) item.scrollIntoView({ block: 'nearest' });
+  }
+
+  /* ---------- tools ---------- */
+  function buildTools() {
+    const sc = $('#sizeChips');
+    SIZES.forEach((s) => {
+      const b = el('button', 'chip'); b.type = 'button'; b.dataset.k = 'size'; b.dataset.v = s; b.textContent = s; b.title = s + ' point';
+      sc.append(b);
+    });
+    const fit = el('button', 'chip fit'); fit.type = 'button'; fit.dataset.act = 'fit'; fit.textContent = 'Fit'; fit.title = 'Largest size that fits on the card';
+    sc.append(fit);
+    const fc = $('#fontChips');
+    Object.entries(FONTS).forEach(([k, f]) => {
+      const b = el('button', 'chip font-chip'); b.type = 'button'; b.dataset.k = 'font'; b.dataset.v = k;
+      const aa = el('span', 'aa'); aa.textContent = 'Aa'; aa.style.fontFamily = f.stack;
+      const fn = el('span', 'fn'); fn.textContent = f.label;
+      b.append(aa, fn); fc.append(b);
+    });
+    const ic = $('#inkChips');
+    Object.entries(INKS).forEach(([k, col]) => {
+      const b = el('button', 'ink'); b.type = 'button'; b.dataset.k = 'ink'; b.dataset.v = k; b.style.background = col;
+      b.title = INK_NAMES[k]; b.setAttribute('aria-label', INK_NAMES[k] + ' ink');
+      ic.append(b);
+    });
+  }
+
+  function updateTools() {
+    document.querySelectorAll('.seg [data-face]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.face === state.face)));
+    const c = cur();
+    const n = state.cards.length;
+    $('#applyAllBtn').textContent = 'Use this style on all ' + (n || '') + ' ' + (state.face === 'front' ? 'fronts' : 'backs');
+    if (!c) return;
+    const st = styleOf(c, state.face);
+    document.querySelectorAll('.tools [data-k]').forEach((b) => {
+      const k = b.dataset.k;
+      let on;
+      if (k === 'bold' || k === 'italic') on = !!st[k];
+      else on = String(st[k]) === b.dataset.v;
+      b.setAttribute('aria-pressed', String(on));
+    });
+  }
+
+  function restyleCurrent() {
+    const c = cur();
+    const f = editorFace(state.face);
+    if (f) applyStyle(f, styleOf(c, state.face));
+    updateTools();
+    updateEditorWarnings();
+    persist();
+  }
+
+  // keep the caret in the card while clicking tool buttons
+  $('.tools').addEventListener('mousedown', (e) => { if (e.target.closest('button')) e.preventDefault(); });
+  $('.tools').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    const c = cur();
+    if (b.dataset.face) { setFace(b.dataset.face); return; }
+    if (!c) return;
+    const st = styleOf(c, state.face);
+    if (b.dataset.k) {
+      const k = b.dataset.k;
+      if (k === 'bold' || k === 'italic') st[k] = !st[k];
+      else st[k] = k === 'size' ? Number(b.dataset.v) : b.dataset.v;
+      restyleCurrent();
+    } else if (b.dataset.act === 'fit') {
+      fitCurrent(state.face);
+    } else if (b.id === 'applyAllBtn') {
+      const key = state.face === 'front' ? 'fs' : 'bs';
+      state.cards.forEach((card) => { card[key] = { ...st }; });
+      state.defaults[state.face] = { ...st };
+      state.example = false;
+      renderRail(); renderEditor(); persist();
+      toast('Style applied to all ' + state.cards.length + ' ' + (state.face === 'front' ? 'fronts' : 'backs') + '.');
+    }
+  });
+
+  function fitCurrent(side) {
+    const c = cur(); if (!c) return;
+    const s = fitSize(c, side);
+    const st = styleOf(c, side);
+    if (s) { st.size = s; toast('Set to ' + s + ' pt, the largest size that fits.'); }
+    else { st.size = SIZES[0]; toast('Still too long at ' + SIZES[0] + ' pt. Shorten the text or split it into two cards.'); }
+    state.face = side;
+    markActive();
+    restyleCurrent();
+  }
+  document.querySelectorAll('[data-fit]').forEach((b) => b.addEventListener('click', () => fitCurrent(b.dataset.fit)));
+
+  /* ---------- card operations ---------- */
+  function addCard(after = state.sel) {
+    const c = blankCard();
+    const at = state.cards.length ? after + 1 : 0;
+    state.cards.splice(at, 0, c);
+    state.sel = at; state.face = 'front';
+    renderRail(); renderEditor(); persist();
+    setFace('front');
+    const item = $('#cardList').children[at]; if (item) item.scrollIntoView({ block: 'nearest' });
+  }
+  $('#addBtn').addEventListener('click', () => addCard());
+  $('#emptyAdd').addEventListener('click', () => addCard());
+
+  $('#dupBtn').addEventListener('click', () => {
+    const c = cur(); if (!c) return;
+    const copy = JSON.parse(JSON.stringify(c)); copy.id = uid();
+    state.cards.splice(state.sel + 1, 0, copy);
+    select(state.sel + 1);
+    toast('Card duplicated.');
+  });
+  let lastDeleted = null;
+  $('#delBtn').addEventListener('click', () => {
+    if (!cur()) return;
+    lastDeleted = { card: state.cards[state.sel], at: state.sel };
+    state.cards.splice(state.sel, 1);
+    state.sel = Math.max(0, Math.min(state.sel, state.cards.length - 1));
+    renderRail(); renderEditor(); persist();
+    toast('Card ' + (lastDeleted.at + 1) + ' deleted.', 'Undo', () => {
+      state.cards.splice(lastDeleted.at, 0, lastDeleted.card);
+      select(lastDeleted.at);
+    });
+  });
+  function move(d) {
+    const i = state.sel, j = i + d;
+    if (j < 0 || j >= state.cards.length) return;
+    [state.cards[i], state.cards[j]] = [state.cards[j], state.cards[i]];
+    select(j);
+  }
+  $('#upBtn').addEventListener('click', () => move(-1));
+  $('#downBtn').addEventListener('click', () => move(1));
+
+  $('#tagInput').addEventListener('input', (e) => {
+    const c = cur(); if (!c) return;
+    c.tag = e.target.value;
+    document.querySelectorAll('#frontSlot .face-tag, #backSlot .face-tag').forEach((t) => { t.textContent = c.tag; });
+    persist();
+  });
+
+  $('#deckTitle').addEventListener('input', (e) => { state.title = e.target.value; persist(); });
+
+  $('#optNumbers').addEventListener('change', (e) => {
+    state.opts.numbers = e.target.checked;
+    document.querySelectorAll('.scaler .face-num').forEach((n) => { n.hidden = !state.opts.numbers; });
+    persist();
+  });
+
+  $('#shrinkAllBtn').addEventListener('click', () => {
+    let changed = 0, stuck = 0;
+    state.cards.forEach((c) => ['front', 'back'].forEach((side) => {
+      if (!overflows(c, side)) return;
+      const st = styleOf(c, side);
+      const s = fitSize(c, side, st.size);
+      if (s) { st.size = s; changed++; } else { st.size = SIZES[0]; stuck++; }
+    }));
+    renderRail(); renderEditor(); persist();
+    if (!changed && !stuck) toast('Every card already fits.');
+    else toast('Resized ' + (changed + stuck) + ' side' + (changed + stuck === 1 ? '' : 's') + (stuck ? '. ' + stuck + ' still too long at ' + SIZES[0] + ' pt.' : '.'));
+  });
+
+  // two-click confirmation for clearing
+  function armButton(btn, armedLabel, fn) {
+    let armed = false, timer;
+    const orig = btn.textContent;
+    btn.addEventListener('click', () => {
+      if (!armed) {
+        armed = true; btn.textContent = armedLabel; btn.classList.add('danger-armed');
+        timer = setTimeout(() => { armed = false; btn.textContent = orig; btn.classList.remove('danger-armed'); }, 3500);
+        return;
+      }
+      clearTimeout(timer); armed = false; btn.textContent = orig; btn.classList.remove('danger-armed');
+      fn();
+    });
+  }
+  function startFresh() {
+    const keepPrint = state.print;
+    state = blankDeck();
+    state.print = keepPrint;
+    renderAll();
+    persist();
+    $('#deckTitle').select(); $('#deckTitle').focus();
+  }
+  armButton($('#newDeckBtn'), 'Click again to clear this deck', () => {
+    const old = JSON.stringify(state);
+    startFresh();
+    toast('Started a new deck.', 'Undo', () => { state = normalize(JSON.parse(old)); renderAll(); persist(); });
+  });
+  $('#clearExampleBtn').addEventListener('click', startFresh);
+  $('#dismissBannerBtn').addEventListener('click', () => { state.example = false; $('#exampleBanner').hidden = true; persist(); });
+
+  /* ---------- save / open ---------- */
+  function slug(s) { return (s || 'flash-cards').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'flash-cards'; }
+  function download(name, text, type) {
+    const blob = new Blob([text], { type });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.append(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  function saveFile() {
+    const out = { app: 'half-sheet-flash-cards', version: 1, title: state.title, defaults: state.defaults, opts: state.opts, print: state.print,
+      cards: state.cards.map(({ front, back, tag, fs, bs }) => ({ front, back, tag, fs, bs })) };
+    download(slug(state.title) + '.flashcards.json', JSON.stringify(out, null, 2), 'application/json');
+    toast('Deck saved as ' + slug(state.title) + '.flashcards.json. Use Open to load it again.');
+  }
+  $('#saveBtn').addEventListener('click', saveFile);
+  $('#openBtn').addEventListener('click', () => $('#fileInput').click());
+  $('#fileInput').addEventListener('change', async (e) => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    const text = await f.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch (err) { data = null; }
+    if (data) {
+      const d = normalize(data);
+      if (!d) { toast("That file isn't a flash card deck. Pick a .json file saved from this page."); return; }
+      const old = JSON.stringify(state);
+      d.example = false; d.sel = 0;
+      state = d; renderAll(); persist();
+      toast('Opened "' + (state.title || f.name) + '" with ' + state.cards.length + ' cards.', 'Undo', () => { state = normalize(JSON.parse(old)); renderAll(); persist(); });
+    } else {
+      // plain text or CSV: hand it to bulk add
+      let t = text;
+      if (/\.csv$/i.test(f.name)) t = t.split(/\r?\n/).map((l) => (l.includes('\t') ? l : l.replace(/^("([^"]*)"|[^,]*),/, (m, a, q) => (q ?? a) + '\t'))).join('\n');
+      openBulk(t);
+    }
+  });
+
+  /* ---------- bulk add ---------- */
+  function parseBulk(txt) {
+    return txt.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((l) => {
+      let i = l.indexOf('\t'); if (i < 0) i = l.indexOf('|');
+      const q = i < 0 ? l : l.slice(0, i);
+      const a = i < 0 ? '' : l.slice(i + 1);
+      const fix = (s) => s.trim().replace(/^"(.*)"$/, '$1').replace(/\\n/g, '\n');
+      return { q: fix(q), a: fix(a) };
+    });
+  }
+  function openBulk(prefill) {
+    if (typeof prefill === 'string') $('#bulkText').value = prefill;
+    updateBulkCount();
+    $('#bulkDlg').showModal();
+    $('#bulkText').focus();
+  }
+  function updateBulkCount() {
+    const n = parseBulk($('#bulkText').value).length;
+    $('#bulkAdd').disabled = n === 0;
+    $('#bulkAdd').textContent = n ? 'Add ' + n + ' card' + (n === 1 ? '' : 's') : 'Add cards';
+  }
+  $('#bulkText').addEventListener('input', updateBulkCount);
+  $('#bulkBtn').addEventListener('click', () => openBulk());
+  $('#emptyBulk').addEventListener('click', () => openBulk());
+  $('#bulkAdd').addEventListener('click', () => {
+    const rows = parseBulk($('#bulkText').value);
+    if (!rows.length) return;
+    const fit = $('#bulkFit').checked;
+    // replace a single untouched blank card instead of leaving it at the top
+    if (state.cards.length === 1 && !state.cards[0].front && !state.cards[0].back) state.cards = [];
+    const start = state.cards.length;
+    rows.forEach(({ q, a }) => {
+      const c = blankCard(); c.front = q; c.back = a;
+      if (fit) ['front', 'back'].forEach((side) => {
+        const st = styleOf(c, side);
+        if (overflows(c, side)) { const s = fitSize(c, side, st.size); st.size = s || SIZES[0]; }
+      });
+      state.cards.push(c);
+    });
+    state.example = false;
+    $('#bulkText').value = '';
+    $('#bulkDlg').close();
+    select(start);
+    toast('Added ' + rows.length + ' card' + (rows.length === 1 ? '' : 's') + '.');
+  });
+
+  /* ---------- print ---------- */
+  function layoutPages() {
+    const p = state.print;
+    const C = state.cards.map((card, i) => ({ card, i }));
+    const F = (x) => (x ? { ...x, side: 'front' } : null);
+    const B = (x) => (x ? { ...x, side: 'back' } : null);
+    if (p.paper === 'half') {
+      if (p.sides === 'fronts') return C.map((x) => [F(x)]);
+      if (p.sides === 'backs') return C.map((x) => [B(x)]);
+      return C.flatMap((x) => [[F(x)], [B(x)]]);
+    }
+    if (p.sides === 'fold') return C.map((x) => [F(x), B(x)]);
+    const pairs = [];
+    for (let k = 0; k < C.length; k += 2) pairs.push([C[k], C[k + 1] || null]);
+    if (p.sides === 'fronts') return pairs.map(([a, b]) => [F(a), F(b)]);
+    if (p.sides === 'backs') return pairs.map(([a, b]) => [B(a), B(b)]);
+    return pairs.flatMap(([a, b]) => [[F(a), F(b)], [B(a), B(b)]]);
+  }
+
+  function rotates(slot) {
+    const p = state.print;
+    return p.rotate && slot.side === 'back' && (p.sides === 'duplex' || p.sides === 'fold');
+  }
+
+  function buildPrint() {
+    const p = state.print;
+    const root = $('#print-root');
+    root.innerHTML = '';
+    $('#page-rule').textContent = p.paper === 'letter'
+      ? '@page { size: 8.5in 11in; margin: 0; }'
+      : '@page { size: 8.5in 5.5in; margin: 0; }';
+    layoutPages().forEach((slots) => {
+      const sh = el('div', 'sheet ' + (p.paper === 'letter' ? 'letter' : 'half'));
+      if (p.paper === 'letter' && p.guides) sh.classList.add('guides');
+      slots.forEach((s) => {
+        const slot = el('div', 'slot');
+        if (s) {
+          const f = makeFace(s.card, s.side, s.i);
+          if (rotates(s)) f.classList.add('rot');
+          slot.append(f);
+        }
+        sh.append(slot);
+      });
+      root.append(sh);
+    });
+  }
+
+  function renderPrintDlg() {
+    const p = state.print;
+    if (p.paper === 'half' && p.sides === 'fold') p.sides = 'duplex';
+    document.querySelectorAll('#printForm input[name="paper"]').forEach((r) => { r.checked = r.value === p.paper; });
+    document.querySelectorAll('#printForm input[name="sides"]').forEach((r) => {
+      r.checked = r.value === p.sides;
+      r.disabled = r.value === 'fold' && p.paper === 'half';
+    });
+    $('#optGuides').checked = p.guides;
+    $('#guidesRow').hidden = p.paper !== 'letter';
+    $('#optRotate').checked = p.rotate;
+
+    const n = state.cards.length;
+    const pages = layoutPages();
+    const cards = n + ' card' + (n === 1 ? '' : 's');
+    let msg;
+    if (p.paper === 'letter') {
+      if (p.sides === 'duplex') msg = cards + ' on ' + Math.ceil(n / 2) + ' letter sheet' + (Math.ceil(n / 2) === 1 ? '' : 's') + ', printed on both sides. Cut each sheet in half on the line.';
+      else if (p.sides === 'fold') msg = cards + ' on ' + n + ' letter sheet' + (n === 1 ? '' : 's') + '. Each sheet has the question on the top half and the answer on the bottom half. Fold back on the line so the printing faces out.';
+      else msg = (p.sides === 'fronts' ? 'Questions' : 'Answers') + ' from ' + cards + ' on ' + pages.length + ' letter sheet' + (pages.length === 1 ? '' : 's') + ', two per sheet.';
+    } else {
+      if (p.sides === 'duplex') msg = cards + ' on ' + n + ' half-letter sheet' + (n === 1 ? '' : 's') + ', printed on both sides.';
+      else msg = (p.sides === 'fronts' ? 'Questions' : 'Answers') + ' from ' + cards + ', one per 8.5 × 5.5 page.';
+    }
+    if (!n) msg = 'Add a card first. There is nothing to print yet.';
+    $('#printSummary').textContent = msg;
+    $('#doPrint').disabled = !n;
+
+    const minis = $('#minis'); minis.innerHTML = '';
+    const showN = p.sides === 'duplex' ? 2 : Math.min(2, pages.length);
+    pages.slice(0, showN).forEach((slots, idx) => {
+      const w = el('div', 'mini-wrap');
+      const m = el('div', 'mini ' + (p.paper === 'letter' ? 'letter' : 'half'));
+      slots.forEach((s) => {
+        const d = el('div');
+        if (s) { d.textContent = (s.side === 'front' ? 'Q' : 'A') + (s.i + 1); if (rotates(s)) d.className = 'rot'; }
+        m.append(d);
+      });
+      const cap = el('span');
+      if (p.sides === 'duplex') cap.textContent = idx === 0 ? 'side 1' : 'side 2';
+      else cap.textContent = 'page ' + (idx + 1);
+      w.append(m, cap); minis.append(w);
+    });
+
+    const tips = [
+      ['Margins', 'None (or Minimum)'],
+      ['Scale', '100% / Actual size, not "Fit to page"'],
+      ['Headers and footers', 'off'],
+    ];
+    if (p.paper === 'half') tips.unshift(['Paper size', '5.5 × 8.5 in (often called Statement or Half Letter)']);
+    if (p.sides === 'duplex') tips.push(['Two-sided', p.paper === 'letter' ? 'on, flip on long edge' : 'on, flip on short edge']);
+    const ul = $('#printTips'); ul.innerHTML = '';
+    const head = el('li'); head.innerHTML = '<b>In your browser\'s print dialog:</b>'; head.style.listStyle = 'none'; head.style.marginLeft = '-18px';
+    ul.append(head);
+    tips.forEach(([k, v]) => { const li = el('li'); const b = el('b'); b.textContent = k + ': '; li.append(b, document.createTextNode(v)); ul.append(li); });
+  }
+
+  $('#printForm').addEventListener('change', (e) => {
+    const t = e.target;
+    if (t.name === 'paper') state.print.paper = t.value;
+    if (t.name === 'sides') state.print.sides = t.value;
+    if (t.id === 'optGuides') state.print.guides = t.checked;
+    if (t.id === 'optRotate') state.print.rotate = t.checked;
+    renderPrintDlg(); persist();
+  });
+  function openPrint() { renderPrintDlg(); $('#printDlg').showModal(); }
+  $('#printBtn').addEventListener('click', openPrint);
+  $('#doPrint').addEventListener('click', () => {
+    buildPrint();
+    $('#printDlg').close();
+    setTimeout(() => window.print(), 80);
+  });
+  window.addEventListener('beforeprint', buildPrint);
+
+  /* ---------- toast ---------- */
+  let toastTimer;
+  function toast(msg, actLabel, fn) {
+    const t = $('#toast');
+    t.querySelector('.t-msg').textContent = msg;
+    const b = t.querySelector('.t-act');
+    b.hidden = !actLabel; b.textContent = actLabel || '';
+    b.onclick = () => { t.hidden = true; if (fn) fn(); };
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, actLabel ? 7000 : 3500);
+  }
+
+  /* ---------- keyboard ---------- */
+  document.addEventListener('keydown', (e) => {
+    const mod = e.ctrlKey || e.metaKey;
+    if (!mod) return;
+    if (document.querySelector('dialog[open]')) return;
+    if (e.key === 'Enter') { e.preventDefault(); addCard(); }
+    else if (e.key.toLowerCase() === 's') { e.preventDefault(); saveFile(); }
+    else if (e.key.toLowerCase() === 'p') { e.preventDefault(); openPrint(); }
+  });
+
+  /* ---------- scaling the true-size faces ---------- */
+  const ro = new ResizeObserver((entries) => {
+    entries.forEach((en) => en.target.style.setProperty('--k', en.contentRect.width / 816));
+  });
+  ro.observe($('#frontSlot'));
+  ro.observe($('#backSlot'));
+
+  function renderAll() {
+    $('#deckTitle').value = state.title;
+    $('#optNumbers').checked = state.opts.numbers;
+    renderRail();
+    renderEditor();
+  }
+
+  buildTools();
+  renderAll();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { renderRail(); updateEditorWarnings(); });
+})();
+</script>
+</body>
+</html>

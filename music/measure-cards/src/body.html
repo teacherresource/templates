@@ -1,0 +1,321 @@
+<header class="top">
+  <h1 class="wordmark">Measure <em>Cards</em></h1>
+  <input id="deckName" class="deck-name" value="Untitled deck" aria-label="Deck name" spellcheck="false">
+  <div class="top-actions">
+    <span class="save-status" id="saveStatus" role="status"></span>
+    <div class="group" role="group" aria-label="Undo and redo">
+      <button class="btn ghost small" id="btnUndo" title="Undo (Ctrl+Z)" disabled>
+        <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.5 2.5 6.5l3 3"/><path d="M2.8 6.5H10a3.5 3.5 0 0 1 0 7H7"/></svg>Undo</button>
+      <button class="btn ghost small" id="btnRedo" title="Redo (Ctrl+Shift+Z)" disabled>Redo
+        <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="m10.5 3.5 3 3-3 3"/><path d="M13.2 6.5H6a3.5 3.5 0 0 0 0 7h3"/></svg></button>
+    </div>
+    <details class="menu" id="deckMenu">
+      <summary class="btn ghost small">Deck
+        <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><path d="m2.5 4.5 3.5 3.5 3.5-3.5"/></svg></summary>
+      <div class="menu-list">
+        <button id="btnNew">New deck</button>
+        <button id="btnOpen">Open a deck file…</button>
+        <button id="btnSave">Save deck to a file<small>a copy you can move to another computer</small></button>
+        <hr>
+        <button id="btnStarter">Starter decks…<small>ready-made rhythm, pitch, shape-note and hymn cards</small></button>
+        <button id="btnBulk">Add many cards at once…</button>
+      </div>
+    </details>
+    <button class="btn ghost small" id="btnHelp">How to</button>
+    <button class="btn" id="btnPresent">
+      <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="9" rx="1"/><path d="M8 11.5v2.5M5 14h6"/></svg>Present</button>
+    <button class="btn primary" id="btnPrint">
+      <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 5.5v-4h7v4"/><rect x="1.5" y="5.5" width="13" height="6" rx="1"/><path d="M4.5 9.5h7v5h-7z"/></svg>Print deck</button>
+  </div>
+</header>
+
+<main class="app">
+
+  <!-- ===== cards ===== -->
+  <aside class="rail" aria-label="Cards in this deck">
+    <div class="rail-head"><b id="deckCount">1 card</b><span>drag to reorder</span></div>
+    <ul class="deck-list" id="deckList"></ul>
+    <div class="rail-foot">
+      <button class="btn primary" id="btnAdd">Add card</button>
+      <div class="rail-tools">
+        <button class="btn small icon" id="btnDup" title="Duplicate this card" aria-label="Duplicate this card">
+          <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1"/><path d="M10.5 5.5v-2a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2"/></svg></button>
+        <button class="btn small icon" id="btnUp" title="Move card up" aria-label="Move card up">
+          <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3M4 7l4-4 4 4"/></svg></button>
+        <button class="btn small icon" id="btnDown" title="Move card down" aria-label="Move card down">
+          <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M4 9l4 4 4-4"/></svg></button>
+        <button class="btn small icon danger" id="btnDel" title="Delete this card" aria-label="Delete this card">
+          <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5v-2h3v2M4.5 4.5l.6 9h5.8l.6-9"/></svg></button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== the live card ===== -->
+  <section class="stage" aria-label="Card preview">
+    <div class="stage-bar">
+      <div class="pager">
+        <button class="btn ghost small icon" id="btnPrev" aria-label="Previous card">‹</button>
+        <span id="pagerPos">Card 1 of 1</span>
+        <button class="btn ghost small icon" id="btnNext" aria-label="Next card">›</button>
+      </div>
+      <button class="btn small" id="btnPlay" title="Play this card">
+        <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path class="solid" d="M3 1.5v11l9-5.500z"/></svg><span>Play</span></button>
+      <label class="tempo">tempo <input type="number" id="optTempo" min="30" max="240" step="2" value="84" aria-label="Tempo in beats per minute"> bpm</label>
+      <span class="stage-hint" id="stageHint"></span>
+    </div>
+    <div class="sheet-frame" id="sheetFrame" tabindex="0" aria-label="The card. Click the staff to add a note.">
+      <div class="scaler" id="scaler"></div>
+    </div>
+  </section>
+
+  <!-- ===== composer ===== -->
+  <section class="composer" aria-label="Edit card">
+    <div class="pane">
+      <div class="pane-title"><h2 id="editorTitle">Card 1</h2><span id="editorSub">type, use the buttons, or click the staff</span>
+        <button class="linkish" id="btnHelp2">How to type notes</button></div>
+
+      <div class="voices" id="voices"></div>
+      <p class="msg" id="musicWarn" hidden></p>
+
+      <div class="sel-bar" id="selBar" hidden>
+        <span id="selText"></span>
+        <button id="selDel">Remove</button>
+        <button id="selDone">Done</button>
+      </div>
+
+      <div class="palette" id="palette" aria-label="Note buttons">
+        <div class="pal-row" id="palDur"><span class="pal-label">Length</span></div>
+        <div class="pal-row" id="palPitch"><span class="pal-label">Add</span></div>
+        <div class="pal-row" id="palMarks"><span class="pal-label">Marks</span></div>
+      </div>
+
+      <div class="field">
+        <span class="lbl">Lyrics <span class="hint">one syllable per note · split words with hyphens: <code>A-maz-ing</code> · <code>_</code> skips a note</span></span>
+        <div class="verses" id="verses"></div>
+        <div class="row"><button class="btn small ghost" id="btnVerse">Add a verse</button></div>
+      </div>
+    </div>
+
+    <div class="pane">
+      <div class="tabs" role="tablist" aria-label="Card settings">
+        <button class="tab" role="tab" data-tab="staff" aria-selected="true">Staff</button>
+        <button class="tab" role="tab" data-tab="shapes">Shapes</button>
+        <button class="tab" role="tab" data-tab="labels">Labels</button>
+        <button class="tab" role="tab" data-tab="words">Words</button>
+        <button class="tab" role="tab" data-tab="page">Page</button>
+      </div>
+
+      <div class="tabpanel" data-panel="staff">
+        <div class="field">
+          <span class="lbl">Staff</span>
+          <div class="seg" role="radiogroup" aria-label="Staff">
+            <label><input type="radio" name="fLayout" value="single"><span>Single staff</span></label>
+            <label><input type="radio" name="fLayout" value="grand"><span>Grand staff</span></label>
+            <label><input type="radio" name="fLayout" value="rhythm"><span>Rhythm line</span></label>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label for="fClef">Clef</label>
+            <select id="fClef">
+              <option value="treble">Treble</option>
+              <option value="bass">Bass</option>
+              <option value="alto">Alto</option>
+              <option value="tenor">Tenor</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="fTime">Time signature</label>
+            <select id="fTime"></select>
+          </div>
+          <div class="field" style="grid-column:1 / -1">
+            <label for="fKey">Key signature</label>
+            <select id="fKey"></select>
+          </div>
+        </div>
+        <div class="checks">
+          <label class="check"><input type="checkbox" id="fShowClef"> Show clef</label>
+          <label class="check"><input type="checkbox" id="fShowKey"> Show key</label>
+          <label class="check"><input type="checkbox" id="fShowTime"> Show time</label>
+          <label class="check"><input type="checkbox" id="fEndBar"> Final barline</label>
+        </div>
+        <div class="row"><button class="btn ghost small" id="btnApplyAll">Use this staff setup on every card</button></div>
+      </div>
+
+      <div class="tabpanel" data-panel="shapes" hidden>
+        <div class="field">
+          <span class="lbl">Note heads</span>
+          <div class="seg" role="radiogroup" aria-label="Note heads">
+            <label><input type="radio" name="fShapes" value=""><span>Round</span></label>
+            <label><input type="radio" name="fShapes" value="4"><span>4 shapes</span></label>
+            <label><input type="radio" name="fShapes" value="7"><span>7 shapes</span></label>
+          </div>
+        </div>
+        <div id="shapeInfo" hidden>
+          <div class="legend" id="shapeLegend"></div>
+          <p class="hint" id="shapeNote" style="margin-top:8px"></p>
+        </div>
+        <p class="hint" id="shapeOff">Shape notes give each step of the scale its own note head. Pick four shapes (fa sol la mi) or seven (do re mi fa sol la ti).</p>
+      </div>
+
+      <div class="tabpanel" data-panel="labels" hidden>
+        <div class="labels">
+          <div class="letter-staves" id="letterStaves"></div>
+          <div class="labels-side">
+            <p class="hint">Type into any line or space and it prints beside the staff. Empty boxes print nothing, so you can label only the ones you're teaching.</p>
+            <div class="field">
+              <span class="lbl">Fill with</span>
+              <div class="seg" role="radiogroup" aria-label="Fill labels with">
+                <label><input type="radio" name="ltrMode" value="letters" checked><span>Letter names</span></label>
+                <label><input type="radio" name="ltrMode" value="syllables"><span>Syllables</span></label>
+              </div>
+            </div>
+            <div class="btns">
+              <button class="btn small" id="btnLtrLines">Lines</button>
+              <button class="btn small" id="btnLtrSpaces">Spaces</button>
+              <button class="btn small" id="btnLtrAll">Both</button>
+              <button class="btn small ghost" id="btnLtrClear">Clear</button>
+            </div>
+            <p class="msg" id="lettersNote" hidden>A rhythm line has no lines and spaces to label.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabpanel" data-panel="words" hidden>
+        <div class="field">
+          <label for="fTitle">Heading above the music</label>
+          <input type="text" id="fTitle" placeholder="optional">
+        </div>
+        <div class="field">
+          <label for="fCaption">Caption under the music</label>
+          <input type="text" id="fCaption" placeholder="a line of plain text, centred">
+        </div>
+        <div class="field">
+          <label for="fAnswer">Answer</label>
+          <input type="text" id="fAnswer" placeholder="shown only when you ask for it">
+          <span class="hint">Prints small in the corner when "Print answers" is on, and appears in Present mode when you press A.</span>
+        </div>
+      </div>
+
+      <div class="tabpanel" data-panel="page" hidden>
+        <p class="scope">These apply to the whole deck.</p>
+        <div class="row">
+          <div class="field"><span class="lbl">Paper</span>
+            <span class="seg" role="radiogroup" aria-label="Orientation">
+              <label><input type="radio" name="optOrient" value="landscape" checked><span>Landscape</span></label>
+              <label><input type="radio" name="optOrient" value="portrait"><span>Portrait</span></label>
+            </span></div>
+          <div class="field"><span class="lbl">Cards per page</span>
+            <span class="seg" role="radiogroup" aria-label="Cards per page">
+              <label><input type="radio" name="optPerPage" value="1" checked><span>1</span></label>
+              <label><input type="radio" name="optPerPage" value="2"><span>2</span></label>
+              <label><input type="radio" name="optPerPage" value="4"><span>4</span></label>
+            </span></div>
+          <div class="field"><label class="lbl" for="optSize">Note size</label>
+            <select id="optSize" style="width:auto">
+              <option value="xl">Biggest</option>
+              <option value="l" selected>Big</option>
+              <option value="m">Medium</option>
+              <option value="s">Small</option>
+            </select></div>
+        </div>
+        <div class="checks">
+          <label class="check"><input type="checkbox" id="optSeq" checked> Number cards</label>
+          <label class="check"><input type="checkbox" id="optAnswers"> Print answers</label>
+        </div>
+        <p class="hint" id="tipStore">Your deck is kept in this browser as you work. Use <b>Deck › Save deck to a file</b> to keep a copy you can move to another computer.</p>
+        <p class="hint">When printing, choose <b>Letter</b> paper and turn <b>off</b> headers and footers for a clean sheet.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="printroot"></div>
+
+<div class="toast" id="toast" role="status" hidden>
+  <span id="toastMsg"></span>
+  <button class="btn small" id="toastUndo">Undo</button>
+</div>
+
+<!-- present mode -->
+<div class="present" id="present" tabindex="-1" aria-label="Presenting cards">
+  <div class="present-bar">
+    <button class="btn small" id="presentPrev">‹ Previous</button>
+    <span class="pos" id="presentPos">1 / 1</span>
+    <button class="btn small" id="presentNext">Next ›</button>
+    <button class="btn small ghost" id="presentAnswer">Show answer</button>
+    <button class="btn small ghost" id="presentPlay">Play</button>
+    <span class="spacer"></span>
+    <span>Arrow keys or click the card to move. A shows the answer, P plays it. Esc leaves.</span>
+    <button class="btn small" id="presentClose">Close</button>
+  </div>
+  <div class="page" id="presentPage"></div>
+</div>
+
+<dialog id="dlgStarter">
+  <div class="dlg-head">Starter decks</div>
+  <div class="dlg-body">
+    <p>Loading a starter replaces the cards on screen. Undo brings them back.</p>
+    <div id="starterList" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+  <div class="dlg-foot"><button class="btn ghost" data-close>Cancel</button></div>
+</dialog>
+
+<dialog id="dlgBulk">
+  <div class="dlg-head">Add many cards at once</div>
+  <div class="dlg-body">
+    <p>Type one card per line. To add a heading, caption, answer or lyrics, put them after
+       double slashes in that order:</p>
+    <p><code>c4/q d e f // Measure 1 // caption // C D E F // do re mi fa</code></p>
+    <p>New cards copy the staff setup of the card you're on. On a grand staff the notes go to the soprano part.</p>
+    <textarea id="bulkText" rows="8" class="notes-input" spellcheck="false"></textarea>
+    <label class="check"><input type="checkbox" id="bulkReplace"> Replace the whole deck instead of adding</label>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn ghost" data-close>Cancel</button>
+    <button class="btn primary" id="bulkGo">Add cards</button>
+  </div>
+</dialog>
+
+<dialog id="dlgHelp" class="wide">
+  <div class="dlg-head">How to write music on a card</div>
+  <div class="dlg-body">
+    <h3>With the mouse</h3>
+    <div class="help-grid">
+      <b>Click the staff</b><span>adds a note at that line or space, using the length picked in the Length row. Click between two notes to put one in the middle.</span>
+      <b>Click a note</b><span>selects it. Drag it up or down to change the pitch, or use the buttons to change its length, sign, tie or fermata.</span>
+      <b>Shift-click</b><span>stacks another note onto the nearest one to make a chord.</span>
+      <b>Grand staff</b><span>the top staff takes soprano and alto, the bottom takes tenor and bass. Click a part's box first to choose which one you're writing.</span>
+    </div>
+    <h3>With a selected note</h3>
+    <div class="help-grid">
+      <kbd>↑</kbd><span>and <kbd>↓</kbd> move it a step. Hold <kbd>Shift</kbd> for an octave.</span>
+      <kbd>←</kbd><span>and <kbd>→</kbd> step to the note before or after.</span>
+      <kbd>Delete</kbd><span>removes it. <kbd>Esc</kbd> lets go of it.</span>
+    </div>
+    <h3>By typing</h3>
+    <div class="help-grid">
+      <code>c4</code><span>a note name and its octave. <code>c4</code> is middle C</span>
+      <code>c4/q</code><span>add a length: <code>w</code> whole, <code>h</code> half, <code>q</code> quarter, <code>8</code> eighth, <code>16</code> sixteenth</span>
+      <code>c4/q.</code><span>a dot after the length makes it dotted</span>
+      <code>c4/8 d e f</code><span>later notes keep the last octave and length, so this is four eighths</span>
+      <code>f#4 bb3</code><span><code>#</code> sharp, <code>b</code> flat, <code>n</code> natural. Notes follow the key signature unless you add one</span>
+      <code>r/q</code><span>a rest of that length</span>
+      <code>c4+e4+g4/h</code><span>notes joined with <code>+</code> stack into a chord</span>
+      <code>|</code><span>starts the next measure. <code>||</code> is a double bar</span>
+      <code>|: … :|</code><span>repeat signs</span>
+      <code>c4/h~ c/q</code><span>a <code>~</code> after a note ties it to the next one</span>
+      <code>(c4 d e)</code><span>a slur from the first note to the last</span>
+      <code>{c4/8 d e}</code><span>a triplet</span>
+      <code>c5/h^</code><span>a fermata</span>
+      <code>x/q</code><span>a note on a rhythm line, where pitch doesn't matter</span>
+    </div>
+    <h3>Lyrics</h3>
+    <p>Each syllable goes under the next note of the top part. Put hyphens inside a word (<code>A-maz-ing</code>),
+       a lone <code>_</code> to let a note pass without a syllable, and an underscore inside a syllable where you want a space (<code>O_Lord</code>).
+       Rests and the second note of a tie are skipped for you.</p>
+  </div>
+  <div class="dlg-foot"><button class="btn primary" data-close>Got it</button></div>
+</dialog>
+
+<input type="file" id="fileIn" accept="application/json,.json" hidden>

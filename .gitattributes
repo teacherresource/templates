@@ -1,0 +1,3 @@
+# Built pages and bundled libraries: keep them out of language stats and diffs
+*/*/*.html linguist-generated=true -diff
+**/vendor/** linguist-vendored=true -diff
